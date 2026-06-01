@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FormWeaver - AI Planner Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2">
 </head>
 <body>
     <div class="background-blobs">
@@ -45,9 +45,13 @@
                 <span class="loader hidden"></span>
             </button>
             <p id="status-message" class="hidden">Gemini가 도면을 정밀 코딩 중입니다...</p>
+            <div id="result-container" class="hidden" style="margin-top: 1.5rem; text-align: center;">
+                <p style="margin-bottom: 10px; font-weight: bold; color: #4CAF50;">✅ 생성이 완료되었습니다!</p>
+                <a id="download-link" href="#" style="display: inline-block; padding: 12px 24px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; text-decoration: none; font-weight: 600; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">📥 완성된 PDF 다운로드</a>
+            </div>
         </form>
     </main>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=2"></script>
 </body>
 </html>

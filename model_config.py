@@ -10,6 +10,6 @@ def get_gemini_model():
         raise ValueError("GEMINI_API_KEY environment variable is not set. Please check your .env file or server environment variables.")
     
     genai.configure(api_key=api_key)
-    # Using the latest Gemini model for fast and high-quality generation
-    model = genai.GenerativeModel('gemini-2.0-flash')
+    # Using Gemini 3.1 Flash Lite as requested for cost efficiency
+    model = genai.GenerativeModel('gemini-3.1-flash-lite')
     return model

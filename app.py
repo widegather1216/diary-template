@@ -1,11 +1,16 @@
 import os
 import re
+import uuid
 from flask import Flask, request, send_file, render_template, jsonify
 from weasyprint import HTML
 from model_config import get_gemini_model
 import tempfile
 
 app = Flask(__name__)
+
+# 임시 PDF 저장소 생성
+TEMP_PDF_DIR = os.path.join(tempfile.gettempdir(), 'formweaver_pdfs')
+os.makedirs(TEMP_PDF_DIR, exist_ok=True)
 
 SYSTEM_PROMPT = """You are an expert frontend developer and layout designer.
 The user wants to generate a planner/diary layout for printing.
@@ -59,21 +64,66 @@ def generate_pdf():
         html_content = re.sub(r'```\s*$', '', html_content, flags=re.MULTILINE).strip()
         
         # Generate PDF using WeasyPrint
-        pdf_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-        pdf_path = pdf_file.name
-        pdf_file.close()
+        file_id = uuid.uuid4().hex
+        pdf_path = os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
         
+        print(f"[TRACKING 🔍] 새로운 임시 PDF 파일 생성 시작: {pdf_path}")
         HTML(string=html_content).write_pdf(pdf_path)
+        print(f"[TRACKING ✅] 임시 PDF 파일 생성 완료 및 저장됨: {pdf_path}")
         
-        return send_file(
-            pdf_path, 
-            mimetype='application/pdf', 
-            as_attachment=True, 
-            download_name=f"{title}_{page_size}.pdf"
-        )
+        return jsonify({
+            'message': 'success',
+            'file_id': file_id,
+            'title': title,
+            'page_size': page_size
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/download-pdf/<file_id>', methods=['GET'])
+def download_pdf(file_id):
+    if not re.match(r'^[a-f0-9]+$', file_id):
+        return "Invalid file ID", 400
+        
+    pdf_path = os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
+    if not os.path.exists(pdf_path):
+        return "파일을 찾을 수 없거나 이미 삭제되었습니다.", 404
+        
+    title = request.args.get('title', 'planner')
+    page_size = request.args.get('page_size', 'A4')
+    
+    return send_file(
+        pdf_path, 
+        mimetype='application/pdf', 
+        as_attachment=True, 
+        download_name=f"{title}_{page_size}.pdf"
+    )
+
+@app.route('/api/cleanup-pdf', methods=['POST'])
+def cleanup_pdf():
+    # navigator.sendBeacon은 주로 text/plain 형태의 JSON을 보냅니다.
+    data = request.json
+    if request.data and not data:
+        import json
+        try:
+            data = json.loads(request.data)
+        except:
+            data = {}
+            
+    if data and 'file_id' in data:
+        file_id = data['file_id']
+        if re.match(r'^[a-f0-9]+$', file_id):
+            pdf_path = os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
+            if os.path.exists(pdf_path):
+                try:
+                    os.remove(pdf_path)
+                    print(f"[TRACKING 🗑️] 임시 PDF 파일이 정상적으로 삭제되었습니다: {pdf_path}")
+                except Exception as e:
+                    print(f"[TRACKING ❌] 임시 PDF 파일 삭제 실패: {pdf_path}, 원인: {e}")
+            else:
+                print(f"[TRACKING ⚠️] 삭제하려는 파일이 이미 존재하지 않습니다: {pdf_path}")
+    return '', 204
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 7860)))

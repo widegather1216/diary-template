@@ -9,10 +9,10 @@
 #   git pull && docker compose up -d --build   # 코드 갱신 후 재배포
 
 services:
-  calorie:
+  diary:
     build: .
-    image: calorie-counter:latest
-    container_name: calorie-counter
+    image: diary-template:latest
+    container_name: diary-template
     restart: unless-stopped         # 서버 재부팅 시 자동 기동, 수동 중지는 존중
 
     ports:

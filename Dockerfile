@@ -36,6 +36,8 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 # 앱 소스 (6주차 구조 그대로)
 COPY app.py model_config.py ./
+COPY templates/ ./templates/
+COPY static/ ./static/
 
 EXPOSE 7860
 
