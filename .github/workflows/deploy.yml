@@ -45,6 +45,7 @@ jobs:
         uses: appleboy/ssh-action@v1
         env:
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -52,11 +53,15 @@ jobs:
           port: 22
           timeout: 60s
           command_timeout: 10m
-          envs: REPO_URL
+          envs: REPO_URL,GEMINI_API_KEY
           script: |
             set -e
             echo "▶ 배포 시작: $(date)"
             cd /home/ubuntu/diary-template
+
+            echo "▶ 환경변수(.env) 자동 생성"
+            echo "GEMINI_API_KEY=$GEMINI_API_KEY" > .env
+            chmod 600 .env
 
             # 첫 배포라 .git이 없으면 자동 초기화
             if [ ! -d .git ]; then
