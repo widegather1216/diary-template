@@ -14,7 +14,8 @@ os.makedirs(TEMP_PDF_DIR, exist_ok=True)
 
 SYSTEM_PROMPT = """You are an expert frontend developer and layout designer.
 The user wants to generate a planner/diary layout for printing.
-Create a clean, highly practical, straight-line based layout.
+Create a clean, highly practical, and completely UNIQUE layout from scratch.
+Use creative CSS class names and custom styling to avoid standard HTML boilerplates.
 Do NOT use markdown code blocks. Output ONLY raw HTML and CSS.
 The HTML must include <style> tags with the CSS.
 The layout should perfectly fit the specified page size (A4 or A5).
@@ -57,7 +58,17 @@ def generate_pdf():
             [{"role": "user", "parts": [SYSTEM_PROMPT, prompt]}]
         )
         
-        html_content = response.text
+        try:
+            html_content = response.text
+        except ValueError:
+            # response.text 접근 시 필터(저작권 등)에 걸리면 ValueError가 발생합니다.
+            finish_reason = getattr(response.candidates[0], 'finish_reason', None)
+            if finish_reason == 4: # RECITATION
+                return jsonify({'error': "AI가 유사도(저작권) 필터에 걸려 생성을 중단했습니다. '양식 내용'을 조금 더 길고 독창적으로 입력해 보세요."}), 400
+            elif finish_reason == 3: # SAFETY
+                return jsonify({'error': "안전 필터에 의해 생성이 중단되었습니다."}), 400
+            else:
+                return jsonify({'error': f"생성 중단됨 (사유: {finish_reason})"}), 400
         
         # Clean up in case Gemini wraps it in markdown code blocks
         html_content = re.sub(r'^```html\s*', '', html_content, flags=re.MULTILINE)
