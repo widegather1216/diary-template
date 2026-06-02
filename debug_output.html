@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        color: #333;
+        background-color: #fff;
+    }
+    .planner-container {
+        display: flex;
+        flex-direction: column;
+        height: 277mm; /* 297 - 20 total margins */
+    }
+    .header {
+        padding-bottom: 10mm;
+        border-bottom: 2px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+    }
+    .header h1 {
+        font-size: 24pt;
+        font-weight: 300;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    .header .month-year {
+        font-size: 14pt;
+        color: #888;
+    }
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        grid-template-rows: 30px repeat(5, 1fr);
+        flex-grow: 1;
+        gap: 1px;
+        background-color: #eee;
+        border: 1px solid #eee;
+        margin-top: 10mm;
+    }
+    .weekday-header {
+        background-color: #f9f9f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9pt;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    .day-cell {
+        background-color: #fff;
+        padding: 5px;
+        position: relative;
+    }
+    .day-number {
+        font-size: 10pt;
+        color: #aaa;
+    }
+</style>
+</head>
+<body>
+    <div class="planner-container">
+        <div class="header">
+            <h1>Monthly Planner</h1>
+            <div class="month-year">Month / Year</div>
+        </div>
+        <div class="calendar-grid">
+            <div class="weekday-header">Mon</div><div class="weekday-header">Tue</div><div class="weekday-header">Wed</div><div class="weekday-header">Thu</div><div class="weekday-header">Fri</div><div class="weekday-header">Sat</div><div class="weekday-header">Sun</div>
+            
+            <div class="day-cell"><span class="day-number">1</span></div><div class="day-cell"><span class="day-number">2</span></div><div class="day-cell"><span class="day-number">3</span></div><div class="day-cell"><span class="day-number">4</span></div><div class="day-cell"><span class="day-number">5</span></div><div class="day-cell"><span class="day-number">6</span></div><div class="day-cell"><span class="day-number">7</span></div>
+            <div class="day-cell"><span class="day-number">8</span></div><div class="day-cell"><span class="day-number">9</span></div><div class="day-cell"><span class="day-number">10</span></div><div class="day-cell"><span class="day-number">11</span></div><div class="day-cell"><span class="day-number">12</span></div><div class="day-cell"><span class="day-number">13</span></div><div class="day-cell"><span class="day-number">14</span></div>
+            <div class="day-cell"><span class="day-number">15</span></div><div class="day-cell"><span class="day-number">16</span></div><div class="day-cell"><span class="day-number">17</span></div><div class="day-cell"><span class="day-number">18</span></div><div class="day-cell"><span class="day-number">19</span></div><div class="day-cell"><span class="day-number">20</span></div><div class="day-cell"><span class="day-number">21</span></div>
+            <div class="day-cell"><span class="day-number">22</span></div><div class="day-cell"><span class="day-number">23</span></div><div class="day-cell"><span class="day-number">24</span></div><div class="day-cell"><span class="day-number">25</span></div><div class="day-cell"><span class="day-number">26</span></div><div class="day-cell"><span class="day-number">27</span></div><div class="day-cell"><span class="day-number">28</span></div>
+            <div class="day-cell"><span class="day-number">29</span></div><div class="day-cell"><span class="day-number">30</span></div><div class="day-cell"><span class="day-number">31</span></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div>
+        </div>
+    </div>
+</body>
+</html>

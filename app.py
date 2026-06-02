@@ -12,16 +12,34 @@ app = Flask(__name__)
 TEMP_PDF_DIR = os.path.join(tempfile.gettempdir(), 'formweaver_pdfs')
 os.makedirs(TEMP_PDF_DIR, exist_ok=True)
 
-SYSTEM_PROMPT = """You are an expert frontend developer and layout designer.
-The user wants to generate a planner/diary layout for printing.
-Create a clean, highly practical, and completely UNIQUE layout from scratch.
-Use creative CSS class names and custom styling to avoid standard HTML boilerplates.
-Do NOT use markdown code blocks. Output ONLY raw HTML and CSS.
-The HTML must include <style> tags with the CSS.
-The layout should perfectly fit the specified page size (A4 or A5).
-Use mm or cm for precise dimensions.
-Ensure there is a printable area with `@page { size: A4; margin: 10mm; }` 
-(Adjust size to A4 or A5 based on user input).
+SYSTEM_PROMPT = """You are an expert frontend developer, layout designer, and productivity tool creator.
+The user wants to generate a highly professional, aesthetically pleasing, and practical planner/diary layout for printing.
+Requirements:
+1. DESIGN: Create a premium, clean, and highly functional layout. Use modern typography, elegant borders, ample whitespace, and subtle shading for a sophisticated look. Avoid basic, amateur designs.
+2. LANGUAGE: ALL text labels, headings, and placeholders MUST BE IN ENGLISH to avoid rendering issues.
+3. CONTENT: Base the core layout and structure primarily on the "Title" (Form Name). If "Description" is provided, seamlessly integrate those specific user requests into the layout.
+4. STRUCTURE: Use creative CSS class names and custom styling. Avoid standard HTML boilerplates.
+5. TECHNICAL (NO JAVASCRIPT): The PDF engine (WeasyPrint) does NOT support JavaScript. You MUST NOT use `<script>` tags, JS loops, or variables anywhere. Output ONLY raw, static HTML and CSS.
+6. PRINTING: The layout should perfectly fit the specified page size (A4 or A5). Use mm or cm for precise dimensions. Ensure there is a printable area with `@page { size: A4; margin: 10mm; }` (Adjust size to A4 or A5 based on user input).
+7. UNIVERSAL COMPLETENESS (STATIC HTML ONLY): NEVER omit or skip HTML tags. If the layout is a grid (like a calendar), explicitly write out the raw, static HTML for EVERY single cell (e.g., manually write 31 or 35 `<div>` elements). Do NOT use JS `for` loops to generate them. If it is a descriptive form, manually write all necessary lines/sections to cover the full page. Never use shortcuts.
+8. SPACE UTILIZATION (FILL THE PAGE): There must be NO wasted empty space at the bottom. Use `height: 100vh; display: flex; flex-direction: column;` on the main container. For the inner content (whether it's calendar grids or note-taking lines), apply `flex-grow: 1` so they dynamically stretch to fill the entire A4/A5 page down to the bottom margin regardless of the form type.
+9. DATES AND TIME: Do NOT hardcode specific years, months, or days (e.g., "2024", "October"). Instead, always provide elegant blank spaces or lines for the user to manually fill in the date information. Do not force a specific format; adapt the blanks beautifully to the current layout's design.
+No extra explanations, just the code.
+"""
+
+GUIDE_SYSTEM_PROMPT = """You are an expert Bullet Journal artist on Pinterest.
+The user wants a "Hand-drawing Blueprint" (a reference sketch) to help them manually copy the layout into their physical notebook using a pen and a ruler.
+Requirements:
+1. DESIGN PURPOSE & AESTHETIC: This is a minimalist bullet journal spread. Do NOT design it like a digital printable form.
+2. FONTS: You MUST use handwriting fonts. Import them correctly via `@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");` and fallback safely: `font-family: 'Patrick Hand', 'Comic Sans MS', cursive;`.
+3. BACKGROUND: You MUST EXACTLY use this CSS for the body to ensure WeasyPrint compatibility and set the dot at the origin: `background-image: radial-gradient(circle at 1px 1px, #b0b0b0 1px, transparent 1px); background-size: 20px 20px;`. ALL other elements MUST have `background: transparent !important;` so the dots show through.
+4. PIXEL-PERFECT 20px GRID ALIGNMENT: You MUST align all elements to the 20px dot grid. You MUST use `* { margin: 0; padding: 0; box-sizing: border-box; }`. Every `height`, `margin`, `padding`, and `line-height` value MUST be an exact multiple of 20px (e.g., 20px, 40px, 60px). NEVER use values like 10px or 15px. This is critical so that any drawn lines (`border-bottom`) land perfectly on top of the background dots.
+5. MINIMAL RULER LINES: The user must draw these lines by hand. Minimize the total number of lines to reduce drawing fatigue. Do NOT draw massive fully-enclosed grids with 30+ boxes. Instead, use open-ended boxes (e.g., border-bottom only, or U-shapes), simple underlines, or rely on empty space to separate areas. Use thin, crisp lines (`1px solid #333`).
+6. HELPER TEXT: Occasionally add small, faint helper notes like "(Leave space here)", "(List goals)", or "(5 dots wide)" to guide the user's drawing process.
+7. PROPORTIONS & FULL HEIGHT: The layout MUST cover the entire page height. Use `min-height: 100vh; display: flex; flex-direction: column;` on the main container. You MUST give the largest bottom area (like a notes section or quotes box) `flex-grow: 1` so it stretches to the absolute bottom margin. NEVER leave a large empty void at the bottom half of the page.
+8. LANGUAGE: ALL text must be in ENGLISH.
+9. TECHNICAL (NO JAVASCRIPT): WeasyPrint does NOT support JavaScript. Output ONLY raw, static HTML and CSS. Do NOT use `<script>` tags or JS loops. Hardcode all necessary HTML manually.
+10. PRINTING: Ensure there is a printable area with `@page { size: A4; margin: 10mm; }` (Adjust size based on user input).
 No extra explanations, just the code.
 """
 
@@ -38,6 +56,7 @@ def generate_pdf():
     title = data.get('title')
     description = data.get('description', '')
     page_size = data.get('pageSize', 'A4')
+    design_mode = data.get('designMode', 'print')
     
     if not title:
         return jsonify({'error': 'Title is required'}), 400
@@ -46,16 +65,19 @@ def generate_pdf():
         model = get_gemini_model()
         
         prompt = f"""
-        Title: {title}
-        Description: {description}
+        Title (Form Name): {title}
+        Description (Additional Requests): {description}
         Page Size: {page_size}
         
-        Generate the raw HTML/CSS for this planner layout. 
-        It must be optimized for {page_size} printing.
+        Generate the raw HTML/CSS for this planner layout based on the Title.
+        If Description is provided, incorporate those specific requests.
+        Remember: ALL text must be in English. It must be optimized for {page_size} printing.
         """
         
+        active_prompt = GUIDE_SYSTEM_PROMPT if design_mode == 'guide' else SYSTEM_PROMPT
+        
         response = model.generate_content(
-            [{"role": "user", "parts": [SYSTEM_PROMPT, prompt]}]
+            [{"role": "user", "parts": [active_prompt, prompt]}]
         )
         
         try:

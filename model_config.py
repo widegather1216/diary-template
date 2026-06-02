@@ -9,7 +9,15 @@ def get_gemini_model():
     if not api_key:
         raise ValueError("GEMINI_API_KEY environment variable is not set. Please check your .env file or server environment variables.")
     
-    genai.configure(api_key=api_key)
+    # Use REST transport to prevent gRPC infinite hanging issues on Mac
+    genai.configure(api_key=api_key, transport="rest")
+    
     # Using Gemini 3.1 Flash Lite as requested for cost efficiency
-    model = genai.GenerativeModel('gemini-3.1-flash-lite')
+    # Set max_output_tokens to 8192 to prevent complex HTML from being cut off
+    model = genai.GenerativeModel(
+        'gemini-3.1-flash-lite',
+        generation_config=genai.types.GenerationConfig(
+            max_output_tokens=8192,
+        )
+    )
     return model

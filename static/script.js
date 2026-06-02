@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = titleInput.value.trim();
         const description = descInput.value.trim();
         const pageSize = pageSizeSelect.value;
+        const designMode = document.querySelector('input[name="designMode"]:checked').value;
 
         if (!title) {
             alert('양식명은 필수 입력 항목입니다.');
@@ -52,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ title, description, pageSize })
+                body: JSON.stringify({ title, description, pageSize, designMode })
             });
 
             if (!response.ok) {

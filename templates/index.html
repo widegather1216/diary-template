@@ -4,54 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FormWeaver - AI Planner Generator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4">
 </head>
 <body>
-    <div class="background-blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-    </div>
-    
-    <main class="glass-container">
-        <header>
+    <main class="app-container">
+        <header class="app-header">
+            <div class="logo-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </div>
             <h1>FormWeaver</h1>
-            <p>AI 맞춤형 다이어리/플래너 양식 생성기</p>
+            <p>Design your perfect planner in seconds</p>
         </header>
 
-        <form id="generator-form">
+        <form id="generator-form" class="generator-form">
             <div class="form-group">
-                <label for="title">양식명 (필수)</label>
-                <input type="text" id="title" placeholder="예: 월간 스케줄러, 오답 노트, 업무 일지" required>
+                <label for="title">양식명</label>
+                <input type="text" id="title" placeholder="예: Weekly Planner, Meeting Notes" required>
             </div>
 
             <div class="form-group">
-                <label for="description">양식 내용 (선택)</label>
-                <textarea id="description" placeholder="AI가 참고할 세부 요구사항을 입력하세요..."></textarea>
+                <label for="description">상세 요구사항 <span class="optional">(선택)</span></label>
+                <textarea id="description" placeholder="원하는 구성, 칸 수, 특별한 섹션 등을 자유롭게 적어주세요."></textarea>
             </div>
 
             <div class="form-group">
-                <label for="pageSize">용지 규격 (필수)</label>
+                <label for="pageSize">용지 규격</label>
                 <div class="select-wrapper">
                     <select id="pageSize" required>
-                        <option value="A4">A4</option>
-                        <option value="A5">A5</option>
+                        <option value="A4">A4 (210 × 297 mm)</option>
+                        <option value="A5">A5 (148 × 210 mm)</option>
                     </select>
                 </div>
             </div>
 
-            <button type="submit" id="generate-btn">
+            <div class="form-group">
+                <label>출력 용도</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="designMode" value="print" checked>
+                        <span class="radio-custom"></span>
+                        <span class="radio-text">🖨️ 프린트용 양식</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="designMode" value="guide">
+                        <span class="radio-custom"></span>
+                        <span class="radio-text">✍️ 손그림 가이드 (다이어리 전사용)</span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" id="generate-btn" class="primary-btn">
                 <span class="btn-text">PDF 생성하기</span>
                 <span class="loader hidden"></span>
             </button>
-            <p id="status-message" class="hidden">Gemini가 도면을 정밀 코딩 중입니다...</p>
-            <div id="result-container" class="hidden" style="margin-top: 1.5rem; text-align: center;">
-                <p style="margin-bottom: 10px; font-weight: bold; color: #4CAF50;">✅ 생성이 완료되었습니다!</p>
-                <a id="download-link" href="#" style="display: inline-block; padding: 12px 24px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; text-decoration: none; font-weight: 600; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">📥 완성된 PDF 다운로드</a>
+            <p id="status-message" class="hidden status-text">AI가 완벽한 레이아웃을 코딩 중입니다...</p>
+            
+            <div id="result-container" class="hidden result-box">
+                <div class="success-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <p class="success-text">생성이 완료되었습니다!</p>
+                <a id="download-link" href="#" class="download-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    PDF 다운로드
+                </a>
             </div>
         </form>
     </main>
 
-    <script src="{{ url_for('static', filename='script.js') }}?v=2"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=4"></script>
 </body>
 </html>
