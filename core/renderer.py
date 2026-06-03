@@ -38,13 +38,46 @@ def get_page_config(paper_size='A4', orientation='portrait'):
 def process_repeat_macros(html_content):
     """
     Recursively finds <repeat count="N">...</repeat> tags and multiplies the inner HTML N times.
-    Processes innermost tags first to support nested loops.
+    Supports sequential variables inside the loop:
+    {i} -> 0, 1, 2...
+    {i+1} -> 1, 2, 3...
+    {i+6} -> 6, 7, 8...
+    {i:02d} -> 00, 01, 02...
+    {i+6:02d} -> 06, 07, 08...
     """
     pattern = re.compile(r'<repeat\s+count="(\d+)">((?:(?!<repeat).)*?)</repeat>', re.IGNORECASE | re.DOTALL)
-    while pattern.search(html_content):
-        html_content = pattern.sub(lambda m: m.group(2) * int(m.group(1)), html_content)
-    return html_content
+    
+    def replacer(m):
+        count = int(m.group(1))
+        inner = m.group(2)
+        result = []
+        for i in range(count):
+            text = inner
+            # Find and evaluate all {i+X} or {i:02d} or {i+X:02d} patterns
+            def eval_expr(match):
+                expr = match.group(1).replace('i', str(i)).strip()
+                # If there's a format specifier like :02d
+                if ':' in expr:
+                    val_str, fmt = expr.split(':', 1)
+                    try:
+                        val = eval(val_str)
+                        return format(val, fmt)
+                    except:
+                        return match.group(0)
+                else:
+                    try:
+                        return str(eval(expr))
+                    except:
+                        return match.group(0)
+            
+            # Match {i}, {i+1}, {i:02d}, {i+6:02d}
+            text = re.sub(r'\{(i[^}]*)\}', eval_expr, text)
+            result.append(text)
+        return "".join(result)
 
+    while pattern.search(html_content):
+        html_content = pattern.sub(replacer, html_content)
+    return html_content
 def assemble_master_html(llm_output, design_mode, page_size, orientation='portrait'):
     """
     Cleans up the LLM-generated HTML and wraps it inside the strict page-container.
@@ -75,7 +108,7 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
         dot_css = f"""
     background-image: radial-gradient(circle, #b0b0b0 1px, transparent 1px) !important;
     background-size: 20px 20px !important;
-    background-position: {bg_x - 10}px {bg_y - 10}px !important;
+    background-position: {bg_x}px {bg_y}px !important;
         """
     
     css_page_size = f"{page_size} landscape" if orientation == "landscape" else page_size
@@ -89,9 +122,8 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
 * {{ box-sizing: border-box; margin: 0; padding: 0; background-color: transparent; }}
 
 body {{
-    width: 100vw; height: 100vh;
+    width: 100%; min-height: 1500px;
     margin: 0 !important; padding: 0 !important;
-    overflow: hidden !important;
     background-color: white !important;
     word-break: keep-all !important;
     overflow-wrap: break-word !important;
