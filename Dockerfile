@@ -36,7 +36,7 @@ RUN pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir -r requirements.txt
 
 # 앱 소스 (6주차 구조 + 리팩토링된 core)
-COPY app.py model_config.py ./
+COPY app.py ./
 COPY core/ ./core/
 COPY templates/ ./templates/
 COPY static/ ./static/
