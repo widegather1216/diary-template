@@ -1,6 +1,7 @@
 import os
 from model_config import get_gemini_model
-from app import get_page_config, get_system_prompts, assemble_master_html
+from core.prompts import get_system_prompts
+from core.renderer import get_page_config, assemble_master_html
 
 def test_size(paper_size):
     print(f"Testing for {paper_size}...")

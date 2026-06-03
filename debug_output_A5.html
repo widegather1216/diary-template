@@ -39,43 +39,59 @@ body {
     display: flex;
     flex-direction: column;
     font-family: 'Patrick Hand', cursive;
+    color: #333;
+    padding: 20px;
+    box-sizing: border-box;
     background-color: transparent !important;
   }
 
   .header {
     height: 60px;
-    padding: 20px;
-    font-size: 40px;
-    border-bottom: 2px solid #333;
+    font-size: 32px;
     display: flex;
     align-items: center;
-    background-color: transparent !important;
+    border-bottom: 2px solid #333;
+    margin-bottom: 20px;
   }
 
-  .book-entry {
+  .book-row {
     height: 120px;
-    padding: 20px;
-    border-bottom: 1px solid #333;
     display: flex;
     flex-direction: column;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #333;
+  }
+
+  .row-top {
+    height: 40px;
+    display: flex;
     gap: 20px;
-    background-color: transparent !important;
+    align-items: center;
+  }
+
+  .box {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #333;
   }
 
   .line {
-    width: 380px;
-    height: 20px;
+    height: 40px;
+    width: 320px;
     border-bottom: 1px solid #333;
-    background-color: transparent !important;
   }
 
   .notes-section {
-    padding: 20px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    background-color: transparent !important;
+  }
+
+  .note-line {
+    height: 40px;
+    border-bottom: 1px solid #333;
+    width: 100%;
   }
 
 </style>
@@ -84,27 +100,37 @@ body {
     <div class="page-container">
 <div class="container">
   <div class="header">Reading Journal</div>
-  
-  <div class="book-entry">
-    <div class="line"></div>
-    <div class="line"></div>
+
+  <div class="book-row">
+    <div class="row-top">
+      <div class="box"></div>
+      <div class="line"></div>
+    </div>
+    <div class="line" style="width: 380px; margin-top: 20px;"></div>
   </div>
 
-  <div class="book-entry">
-    <div class="line"></div>
-    <div class="line"></div>
+  <div class="book-row">
+    <div class="row-top">
+      <div class="box"></div>
+      <div class="line"></div>
+    </div>
+    <div class="line" style="width: 380px; margin-top: 20px;"></div>
   </div>
 
-  <div class="book-entry">
-    <div class="line"></div>
-    <div class="line"></div>
+  <div class="book-row">
+    <div class="row-top">
+      <div class="box"></div>
+      <div class="line"></div>
+    </div>
+    <div class="line" style="width: 380px; margin-top: 20px;"></div>
   </div>
 
   <div class="notes-section">
-    <div class="line"></div>
-    <div class="line"></div>
-    <div class="line"></div>
-    <div class="line"></div>
+    <div class="note-line"></div>
+    <div class="note-line"></div>
+    <div class="note-line"></div>
+    <div class="note-line"></div>
+    <div class="note-line"></div>
   </div>
 </div>
     </div>

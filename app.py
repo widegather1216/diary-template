@@ -1,136 +1,17 @@
 import os
 import re
 import uuid
-from flask import Flask, request, send_file, render_template, jsonify
-from model_config import get_gemini_model
 import tempfile
+from flask import Flask, request, send_file, render_template, jsonify
+
+from model_config import get_gemini_model
+from core.prompts import get_system_prompts
+from core.renderer import get_page_config, assemble_master_html
 
 app = Flask(__name__)
 
 TEMP_PDF_DIR = os.path.join(tempfile.gettempdir(), 'formweaver_pdfs')
 os.makedirs(TEMP_PDF_DIR, exist_ok=True)
-
-def get_page_config(paper_size='A4'):
-    page_dimensions = {
-        'A4': (793.7, 1122.5),
-        'A5': (559.4, 793.7),
-        'B5': (665.2, 944.9)
-    }
-    W, H = page_dimensions.get(paper_size, page_dimensions['A4'])
-    
-    # Target margin ~40px
-    target_margin = 40
-    avail_w = W - (target_margin * 2)
-    cw = int(avail_w // 140) * 140
-    if cw < 280: cw = 280
-    
-    avail_h = H - (target_margin * 2)
-    ch = int(avail_h // 20) * 20
-    
-    half_cw = cw / 2
-    shift_x = -10 if half_cw % 20 != 0 else 0
-    top_pos = 60 # 3 dots
-    
-    return {
-        'W': W, 'H': H,
-        'cw': cw, 'ch': ch,
-        'shift_x': shift_x,
-        'top': top_pos
-    }
-
-def get_system_prompts(cw, ch):
-    SYSTEM_PROMPT = f"""You are an expert frontend developer and layout designer.
-The user wants a highly professional planner/diary layout for printing.
-Requirements:
-1. DESIGN: Premium, clean, functional layout. Modern typography, elegant borders, subtle shading. Avoid amateur designs.
-2. LANGUAGE: ALL text labels and placeholders MUST BE IN ENGLISH.
-3. CANVAS CONSTRAINTS (CRITICAL): Your output will be placed inside a container EXACTLY {cw}px wide and {ch}px tall. Do NOT write `<html>`, `<body>`, or `@page`. Write ONLY the inner HTML elements and `<style>`.
-4. STRUCTURE: Do NOT use CSS Grid (`display: grid`) due to WeasyPrint bugs. Use simple Flexbox.
-5. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title (e.g., Reading Journal, Habit Tracker, Monthly Planner). ONLY IF the user requests a calendar/planner, set column width to EXACTLY {cw // 7}px and manually write out exactly 35 or 42 `<div>` cells without loops. For all other formats, design freely using 20px multiples.
-6. SPACE UTILIZATION (FILL {ch}px): You MUST visually fill the entire {ch}px height. For bottom note areas, use `flex-grow: 1;` and CSS `repeating-linear-gradient(white, white 19px, #e5e7eb 20px)` to fill the remaining space with lines.
-7. NO JAVASCRIPT: Output ONLY pure, static HTML/CSS. If you use `<script>`, you fail.
-No extra explanations, just code.
-"""
-
-    GUIDE_SYSTEM_PROMPT = f"""You are an expert Bullet Journal artist.
-The user wants a "Hand-drawing Blueprint" (a reference sketch) to copy manually.
-Requirements:
-1. CANVAS & GRID (CRITICAL): Your output is placed inside a container EXACTLY {cw}px wide and {ch}px tall. The system automatically draws a 20px dot grid background perfectly aligned with this container. Do NOT write `<body>` or `@page`. Write ONLY inner HTML and `<style>`.
-2. PIXEL-PERFECT 20px MATH: Every `height`, `width`, `margin`, `padding` MUST be a multiple of 20px. For example, `{cw // 7}px` is an exact multiple of 20px, so it perfectly aligns. NEVER use fractional sizes, `10px`, or `%`.
-3. STRUCTURE (NO GRID): Do NOT use CSS Grid (`display: grid`) due to PDF engine bugs. Use Flexbox.
-4. FONTS: Use handwriting fonts. `@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");` and `font-family: 'Patrick Hand', cursive;`.
-5. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title (e.g., Reading Journal, Habit Tracker). ONLY IF it is a calendar, manually write exactly 35 or 42 `<div>` cells with no loops.
-6. MINIMAL RULER LINES: Minimize lines. Use thin `border-bottom: 1px solid #333`. Ensure every element has `background-color: transparent !important;` so dots show through.
-7. SPACE UTILIZATION (FILL {ch}px): You must fill the {ch}px height. Give the last notes element `flex-grow: 1;` so it expands.
-8. NO HELPER TEXT: Do not print instructions like "(Draw line here)". No javascript.
-No extra explanations, just code.
-"""
-    return SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT
-
-def assemble_master_html(llm_output, design_mode, page_size):
-    config = get_page_config(page_size)
-    cw, ch = config['cw'], config['ch']
-    shift_x, top_pos = config['shift_x'], config['top']
-    
-    style_match = re.search(r'<style>(.*?)</style>', llm_output, re.DOTALL | re.IGNORECASE)
-    llm_style = style_match.group(1) if style_match else ""
-    
-    body_match = re.search(r'<body>(.*?)</body>', llm_output, re.DOTALL | re.IGNORECASE)
-    llm_body = body_match.group(1) if body_match else llm_output
-    
-    llm_body = re.sub(r'<style>.*?</style>', '', llm_body, flags=re.DOTALL | re.IGNORECASE)
-    llm_body = re.sub(r'<!DOCTYPE.*?>', '', llm_body, flags=re.IGNORECASE)
-    llm_body = re.sub(r'<html.*?>|</html>', '', llm_body, flags=re.IGNORECASE)
-    llm_body = re.sub(r'<head.*?>|</head>', '', llm_body, flags=re.IGNORECASE)
-    llm_body = re.sub(r'^```html\s*', '', llm_body, flags=re.MULTILINE)
-    llm_body = re.sub(r'```\s*$', '', llm_body, flags=re.MULTILINE).strip()
-    
-    dot_css = ""
-    if design_mode == 'guide':
-        dot_css = f"""
-    background-image: radial-gradient(circle, #b0b0b0 1px, transparent 1px) !important;
-    background-size: 20px 20px !important;
-    background-position: calc(50% + {shift_x}px) {top_pos}px !important;
-        """
-    
-    master_html = f"""<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<style>
-@page {{ size: {page_size}; margin: 0; }}
-* {{ box-sizing: border-box; margin: 0; padding: 0; background-color: transparent; }}
-
-body {{
-    width: 100vw; height: 100vh;
-    margin: 0 !important; padding: 0 !important;
-    overflow: hidden !important;
-    background-color: white !important;
-    {dot_css}
-}}
-
-.page-container {{
-    position: absolute !important;
-    top: {top_pos}px !important; 
-    left: 50% !important; 
-    margin-left: -{cw // 2}px !important;
-    width: {cw}px !important; 
-    height: {ch}px !important;
-    display: flex; 
-    flex-direction: column;
-    overflow: hidden !important;
-}}
-
-{llm_style}
-</style>
-</head>
-<body>
-    <div class="page-container">
-{llm_body}
-    </div>
-</body>
-</html>"""
-    return master_html
 
 @app.route('/')
 def index():
@@ -146,22 +27,31 @@ def generate_pdf():
     description = data.get('description', '')
     page_size = data.get('pageSize', 'A4')
     design_mode = data.get('designMode', 'print')
+    orientation = data.get('orientation')
     
     if not title:
         return jsonify({'error': 'Title is required'}), 400
+
+    if not orientation:
+        combined_text = f"{title} {description}".lower()
+        if any(keyword in combined_text for keyword in ["가로", "landscape", "가로형", "가로방향", "넓게"]):
+            orientation = "landscape"
+        else:
+            orientation = "portrait"
         
     try:
         model = get_gemini_model()
         
-        config = get_page_config(page_size)
+        config = get_page_config(page_size, orientation)
         SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(config['cw'], config['ch'])
         
         prompt = f"""
         Title (Form Name): {title}
         Description (Additional Requests): {description}
         Page Size: {page_size}
+        Orientation: {orientation}
         
-        Generate the inner HTML and `<style>` for this {page_size} layout.
+        Generate the inner HTML and `<style>` for this {page_size} {orientation} layout.
         """
         
         active_prompt = GUIDE_SYSTEM_PROMPT if design_mode == 'guide' else SYSTEM_PROMPT
@@ -180,8 +70,33 @@ def generate_pdf():
                 return jsonify({'error': "안전 필터에 의해 생성이 중단되었습니다."}), 400
             else:
                 return jsonify({'error': f"생성 중단됨 (사유: {finish_reason})"}), 400
+                
+        print("[TRACKING 🔍] 2차 검증 (Self-Reflection) 요청 중...")
+        review_prompt = f"""
+Review the generated HTML below and fix any violations of the design rules:
+1. CRITICAL: The outermost wrapper MUST have `padding: 0;`. Remove any padding on it.
+2. CRITICAL: DO NOT include instructional texts in parentheses (e.g. `(Draw a line)`).
+3. Ensure text inside boxes is vertically centered using `display: flex; align-items: center; justify-content: center;`.
+4. Ensure lines/blanks use explicit characters like `_________` instead of empty spans.
+5. CRITICAL: Short text labels (like 'SUN', 'MON', or 'Author:') MUST have `white-space: nowrap;` to prevent breaking mid-word.
+6. CRITICAL: If you use a grid/table structure where cells have right/bottom borders, ensure the wrapper container has `border-top` and `border-left` so the outer boundaries are not missing.
+
+Generated HTML:
+```html
+{html_content}
+```
+Return ONLY the corrected HTML/CSS. No explanations.
+"""
+        review_response = model.generate_content(
+            [{"role": "user", "parts": [active_prompt, review_prompt]}]
+        )
         
-        master_html = assemble_master_html(html_content, design_mode, page_size)
+        try:
+            html_content = review_response.text
+        except ValueError:
+            pass # Fallback to first pass output if blocked
+        
+        master_html = assemble_master_html(html_content, design_mode, page_size, orientation)
         
         file_id = uuid.uuid4().hex
         pdf_path = os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
