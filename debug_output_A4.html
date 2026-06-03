@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; background-color: transparent; }
+
+body {
+    width: 100vw; height: 100vh;
+    margin: 0 !important; padding: 0 !important;
+    overflow: hidden !important;
+    background-color: white !important;
+    
+    background-image: radial-gradient(circle, #b0b0b0 1px, transparent 1px) !important;
+    background-size: 20px 20px !important;
+    background-position: calc(50% + -10px) 60px !important;
+        
+}
+
+.page-container {
+    position: absolute !important;
+    top: 60px !important; 
+    left: 50% !important; 
+    margin-left: -350px !important;
+    width: 700px !important; 
+    height: 1040px !important;
+    display: flex; 
+    flex-direction: column;
+    overflow: hidden !important;
+}
+
+
+  @import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");
+  
+  .journal-container {
+    width: 700px;
+    height: 1040px;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Patrick Hand', cursive;
+    padding: 40px;
+    box-sizing: border-box;
+    background-color: transparent !important;
+  }
+
+  .header {
+    height: 80px;
+    border-bottom: 2px solid #333;
+    display: flex;
+    align-items: center;
+    font-size: 40px;
+    margin-bottom: 40px;
+  }
+
+  .book-entry {
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 40px;
+    border-bottom: 1px solid #333;
+  }
+
+  .row {
+    display: flex;
+    height: 40px;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .field {
+    border-bottom: 1px solid #333;
+    height: 20px;
+    background-color: transparent !important;
+  }
+
+  .rating-box {
+    width: 120px;
+    height: 20px;
+    border: 1px solid #333;
+  }
+
+  .notes-section {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .line {
+    width: 620px;
+    height: 20px;
+    border-bottom: 1px solid #333;
+    background-color: transparent !important;
+  }
+
+</style>
+</head>
+<body>
+    <div class="page-container">
+<div class="journal-container">
+  <div class="header">Reading Journal</div>
+
+  <!-- Book Entry 1 -->
+  <div class="book-entry">
+    <div class="row">
+      <div style="width: 400px;">Title: ___________________________</div>
+      <div style="width: 200px;">Date: ____________</div>
+    </div>
+    <div class="row" style="margin-top: 20px;">
+      <div style="width: 300px;">Author: _______________________</div>
+      <div style="width: 220px;">Rating: [ ] [ ] [ ] [ ] [ ]</div>
+    </div>
+  </div>
+
+  <!-- Book Entry 2 -->
+  <div class="book-entry">
+    <div class="row">
+      <div style="width: 400px;">Title: ___________________________</div>
+      <div style="width: 200px;">Date: ____________</div>
+    </div>
+    <div class="row" style="margin-top: 20px;">
+      <div style="width: 300px;">Author: _______________________</div>
+      <div style="width: 220px;">Rating: [ ] [ ] [ ] [ ] [ ]</div>
+    </div>
+  </div>
+
+  <!-- Book Entry 3 -->
+  <div class="book-entry">
+    <div class="row">
+      <div style="width: 400px;">Title: ___________________________</div>
+      <div style="width: 200px;">Date: ____________</div>
+    </div>
+    <div class="row" style="margin-top: 20px;">
+      <div style="width: 300px;">Author: _______________________</div>
+      <div style="width: 220px;">Rating: [ ] [ ] [ ] [ ] [ ]</div>
+    </div>
+  </div>
+
+  <div class="notes-section">
+    <div>My Thoughts & Quotes:</div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+  </div>
+</div>
+    </div>
+</body>
+</html>

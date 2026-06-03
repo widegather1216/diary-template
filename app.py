@@ -2,46 +2,135 @@ import os
 import re
 import uuid
 from flask import Flask, request, send_file, render_template, jsonify
-from weasyprint import HTML
 from model_config import get_gemini_model
 import tempfile
 
 app = Flask(__name__)
 
-# 임시 PDF 저장소 생성
 TEMP_PDF_DIR = os.path.join(tempfile.gettempdir(), 'formweaver_pdfs')
 os.makedirs(TEMP_PDF_DIR, exist_ok=True)
 
-SYSTEM_PROMPT = """You are an expert frontend developer, layout designer, and productivity tool creator.
-The user wants to generate a highly professional, aesthetically pleasing, and practical planner/diary layout for printing.
+def get_page_config(paper_size='A4'):
+    page_dimensions = {
+        'A4': (793.7, 1122.5),
+        'A5': (559.4, 793.7),
+        'B5': (665.2, 944.9)
+    }
+    W, H = page_dimensions.get(paper_size, page_dimensions['A4'])
+    
+    # Target margin ~40px
+    target_margin = 40
+    avail_w = W - (target_margin * 2)
+    cw = int(avail_w // 140) * 140
+    if cw < 280: cw = 280
+    
+    avail_h = H - (target_margin * 2)
+    ch = int(avail_h // 20) * 20
+    
+    half_cw = cw / 2
+    shift_x = -10 if half_cw % 20 != 0 else 0
+    top_pos = 60 # 3 dots
+    
+    return {
+        'W': W, 'H': H,
+        'cw': cw, 'ch': ch,
+        'shift_x': shift_x,
+        'top': top_pos
+    }
+
+def get_system_prompts(cw, ch):
+    SYSTEM_PROMPT = f"""You are an expert frontend developer and layout designer.
+The user wants a highly professional planner/diary layout for printing.
 Requirements:
-1. DESIGN: Create a premium, clean, and highly functional layout. Use modern typography, elegant borders, ample whitespace, and subtle shading for a sophisticated look. Avoid basic, amateur designs.
-2. LANGUAGE: ALL text labels, headings, and placeholders MUST BE IN ENGLISH to avoid rendering issues.
-3. CONTENT: Base the core layout and structure primarily on the "Title" (Form Name). If "Description" is provided, seamlessly integrate those specific user requests into the layout.
-4. STRUCTURE: Use creative CSS class names and custom styling. Avoid standard HTML boilerplates.
-5. TECHNICAL (NO JAVASCRIPT): The PDF engine (WeasyPrint) does NOT support JavaScript. You MUST NOT use `<script>` tags, JS loops, or variables anywhere. Output ONLY raw, static HTML and CSS.
-6. PRINTING: The layout should perfectly fit the specified page size (A4 or A5). Use mm or cm for precise dimensions. Ensure there is a printable area with `@page { size: A4; margin: 10mm; }` (Adjust size to A4 or A5 based on user input).
-7. UNIVERSAL COMPLETENESS (STATIC HTML ONLY): NEVER omit or skip HTML tags. If the layout is a grid (like a calendar), explicitly write out the raw, static HTML for EVERY single cell (e.g., manually write 31 or 35 `<div>` elements). Do NOT use JS `for` loops to generate them. If it is a descriptive form, manually write all necessary lines/sections to cover the full page. Never use shortcuts.
-8. SPACE UTILIZATION (FILL THE PAGE): There must be NO wasted empty space at the bottom. Use `height: 100vh; display: flex; flex-direction: column;` on the main container. For the inner content (whether it's calendar grids or note-taking lines), apply `flex-grow: 1` so they dynamically stretch to fill the entire A4/A5 page down to the bottom margin regardless of the form type.
-9. DATES AND TIME: Do NOT hardcode specific years, months, or days (e.g., "2024", "October"). Instead, always provide elegant blank spaces or lines for the user to manually fill in the date information. Do not force a specific format; adapt the blanks beautifully to the current layout's design.
-No extra explanations, just the code.
+1. DESIGN: Premium, clean, functional layout. Modern typography, elegant borders, subtle shading. Avoid amateur designs.
+2. LANGUAGE: ALL text labels and placeholders MUST BE IN ENGLISH.
+3. CANVAS CONSTRAINTS (CRITICAL): Your output will be placed inside a container EXACTLY {cw}px wide and {ch}px tall. Do NOT write `<html>`, `<body>`, or `@page`. Write ONLY the inner HTML elements and `<style>`.
+4. STRUCTURE: Do NOT use CSS Grid (`display: grid`) due to WeasyPrint bugs. Use simple Flexbox.
+5. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title (e.g., Reading Journal, Habit Tracker, Monthly Planner). ONLY IF the user requests a calendar/planner, set column width to EXACTLY {cw // 7}px and manually write out exactly 35 or 42 `<div>` cells without loops. For all other formats, design freely using 20px multiples.
+6. SPACE UTILIZATION (FILL {ch}px): You MUST visually fill the entire {ch}px height. For bottom note areas, use `flex-grow: 1;` and CSS `repeating-linear-gradient(white, white 19px, #e5e7eb 20px)` to fill the remaining space with lines.
+7. NO JAVASCRIPT: Output ONLY pure, static HTML/CSS. If you use `<script>`, you fail.
+No extra explanations, just code.
 """
 
-GUIDE_SYSTEM_PROMPT = """You are an expert Bullet Journal artist on Pinterest.
-The user wants a "Hand-drawing Blueprint" (a reference sketch) to help them manually copy the layout into their physical notebook using a pen and a ruler.
+    GUIDE_SYSTEM_PROMPT = f"""You are an expert Bullet Journal artist.
+The user wants a "Hand-drawing Blueprint" (a reference sketch) to copy manually.
 Requirements:
-1. DESIGN PURPOSE & AESTHETIC: This is a minimalist bullet journal spread. Do NOT design it like a digital printable form.
-2. FONTS: You MUST use handwriting fonts. Import them correctly via `@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");` and fallback safely: `font-family: 'Patrick Hand', 'Comic Sans MS', cursive;`.
-3. BACKGROUND: You MUST EXACTLY use this CSS for the body to ensure WeasyPrint compatibility and set the dot at the origin: `background-image: radial-gradient(circle at 1px 1px, #b0b0b0 1px, transparent 1px); background-size: 20px 20px;`. ALL other elements MUST have `background: transparent !important;` so the dots show through.
-4. PIXEL-PERFECT 20px GRID ALIGNMENT: You MUST align all elements to the 20px dot grid. You MUST use `* { margin: 0; padding: 0; box-sizing: border-box; }`. Every `height`, `margin`, `padding`, and `line-height` value MUST be an exact multiple of 20px (e.g., 20px, 40px, 60px). NEVER use values like 10px or 15px. This is critical so that any drawn lines (`border-bottom`) land perfectly on top of the background dots.
-5. MINIMAL RULER LINES: The user must draw these lines by hand. Minimize the total number of lines to reduce drawing fatigue. Do NOT draw massive fully-enclosed grids with 30+ boxes. Instead, use open-ended boxes (e.g., border-bottom only, or U-shapes), simple underlines, or rely on empty space to separate areas. Use thin, crisp lines (`1px solid #333`).
-6. HELPER TEXT: Occasionally add small, faint helper notes like "(Leave space here)", "(List goals)", or "(5 dots wide)" to guide the user's drawing process.
-7. PROPORTIONS & FULL HEIGHT: The layout MUST cover the entire page height. Use `min-height: 100vh; display: flex; flex-direction: column;` on the main container. You MUST give the largest bottom area (like a notes section or quotes box) `flex-grow: 1` so it stretches to the absolute bottom margin. NEVER leave a large empty void at the bottom half of the page.
-8. LANGUAGE: ALL text must be in ENGLISH.
-9. TECHNICAL (NO JAVASCRIPT): WeasyPrint does NOT support JavaScript. Output ONLY raw, static HTML and CSS. Do NOT use `<script>` tags or JS loops. Hardcode all necessary HTML manually.
-10. PRINTING: Ensure there is a printable area with `@page { size: A4; margin: 10mm; }` (Adjust size based on user input).
-No extra explanations, just the code.
+1. CANVAS & GRID (CRITICAL): Your output is placed inside a container EXACTLY {cw}px wide and {ch}px tall. The system automatically draws a 20px dot grid background perfectly aligned with this container. Do NOT write `<body>` or `@page`. Write ONLY inner HTML and `<style>`.
+2. PIXEL-PERFECT 20px MATH: Every `height`, `width`, `margin`, `padding` MUST be a multiple of 20px. For example, `{cw // 7}px` is an exact multiple of 20px, so it perfectly aligns. NEVER use fractional sizes, `10px`, or `%`.
+3. STRUCTURE (NO GRID): Do NOT use CSS Grid (`display: grid`) due to PDF engine bugs. Use Flexbox.
+4. FONTS: Use handwriting fonts. `@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");` and `font-family: 'Patrick Hand', cursive;`.
+5. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title (e.g., Reading Journal, Habit Tracker). ONLY IF it is a calendar, manually write exactly 35 or 42 `<div>` cells with no loops.
+6. MINIMAL RULER LINES: Minimize lines. Use thin `border-bottom: 1px solid #333`. Ensure every element has `background-color: transparent !important;` so dots show through.
+7. SPACE UTILIZATION (FILL {ch}px): You must fill the {ch}px height. Give the last notes element `flex-grow: 1;` so it expands.
+8. NO HELPER TEXT: Do not print instructions like "(Draw line here)". No javascript.
+No extra explanations, just code.
 """
+    return SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT
+
+def assemble_master_html(llm_output, design_mode, page_size):
+    config = get_page_config(page_size)
+    cw, ch = config['cw'], config['ch']
+    shift_x, top_pos = config['shift_x'], config['top']
+    
+    style_match = re.search(r'<style>(.*?)</style>', llm_output, re.DOTALL | re.IGNORECASE)
+    llm_style = style_match.group(1) if style_match else ""
+    
+    body_match = re.search(r'<body>(.*?)</body>', llm_output, re.DOTALL | re.IGNORECASE)
+    llm_body = body_match.group(1) if body_match else llm_output
+    
+    llm_body = re.sub(r'<style>.*?</style>', '', llm_body, flags=re.DOTALL | re.IGNORECASE)
+    llm_body = re.sub(r'<!DOCTYPE.*?>', '', llm_body, flags=re.IGNORECASE)
+    llm_body = re.sub(r'<html.*?>|</html>', '', llm_body, flags=re.IGNORECASE)
+    llm_body = re.sub(r'<head.*?>|</head>', '', llm_body, flags=re.IGNORECASE)
+    llm_body = re.sub(r'^```html\s*', '', llm_body, flags=re.MULTILINE)
+    llm_body = re.sub(r'```\s*$', '', llm_body, flags=re.MULTILINE).strip()
+    
+    dot_css = ""
+    if design_mode == 'guide':
+        dot_css = f"""
+    background-image: radial-gradient(circle, #b0b0b0 1px, transparent 1px) !important;
+    background-size: 20px 20px !important;
+    background-position: calc(50% + {shift_x}px) {top_pos}px !important;
+        """
+    
+    master_html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+@page {{ size: {page_size}; margin: 0; }}
+* {{ box-sizing: border-box; margin: 0; padding: 0; background-color: transparent; }}
+
+body {{
+    width: 100vw; height: 100vh;
+    margin: 0 !important; padding: 0 !important;
+    overflow: hidden !important;
+    background-color: white !important;
+    {dot_css}
+}}
+
+.page-container {{
+    position: absolute !important;
+    top: {top_pos}px !important; 
+    left: 50% !important; 
+    margin-left: -{cw // 2}px !important;
+    width: {cw}px !important; 
+    height: {ch}px !important;
+    display: flex; 
+    flex-direction: column;
+    overflow: hidden !important;
+}}
+
+{llm_style}
+</style>
+</head>
+<body>
+    <div class="page-container">
+{llm_body}
+    </div>
+</body>
+</html>"""
+    return master_html
 
 @app.route('/')
 def index():
@@ -64,14 +153,15 @@ def generate_pdf():
     try:
         model = get_gemini_model()
         
+        config = get_page_config(page_size)
+        SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(config['cw'], config['ch'])
+        
         prompt = f"""
         Title (Form Name): {title}
         Description (Additional Requests): {description}
         Page Size: {page_size}
         
-        Generate the raw HTML/CSS for this planner layout based on the Title.
-        If Description is provided, incorporate those specific requests.
-        Remember: ALL text must be in English. It must be optimized for {page_size} printing.
+        Generate the inner HTML and `<style>` for this {page_size} layout.
         """
         
         active_prompt = GUIDE_SYSTEM_PROMPT if design_mode == 'guide' else SYSTEM_PROMPT
@@ -83,26 +173,23 @@ def generate_pdf():
         try:
             html_content = response.text
         except ValueError:
-            # response.text 접근 시 필터(저작권 등)에 걸리면 ValueError가 발생합니다.
             finish_reason = getattr(response.candidates[0], 'finish_reason', None)
-            if finish_reason == 4: # RECITATION
-                return jsonify({'error': "AI가 유사도(저작권) 필터에 걸려 생성을 중단했습니다. '양식 내용'을 조금 더 길고 독창적으로 입력해 보세요."}), 400
-            elif finish_reason == 3: # SAFETY
+            if finish_reason == 4:
+                return jsonify({'error': "AI가 유사도 필터에 걸렸습니다. 독창적인 내용을 입력하세요."}), 400
+            elif finish_reason == 3:
                 return jsonify({'error': "안전 필터에 의해 생성이 중단되었습니다."}), 400
             else:
                 return jsonify({'error': f"생성 중단됨 (사유: {finish_reason})"}), 400
         
-        # Clean up in case Gemini wraps it in markdown code blocks
-        html_content = re.sub(r'^```html\s*', '', html_content, flags=re.MULTILINE)
-        html_content = re.sub(r'```\s*$', '', html_content, flags=re.MULTILINE).strip()
+        master_html = assemble_master_html(html_content, design_mode, page_size)
         
-        # Generate PDF using WeasyPrint
         file_id = uuid.uuid4().hex
         pdf_path = os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
         
         print(f"[TRACKING 🔍] 새로운 임시 PDF 파일 생성 시작: {pdf_path}")
-        HTML(string=html_content).write_pdf(pdf_path)
-        print(f"[TRACKING ✅] 임시 PDF 파일 생성 완료 및 저장됨: {pdf_path}")
+        from weasyprint import HTML
+        HTML(string=master_html).write_pdf(pdf_path)
+        print(f"[TRACKING ✅] 임시 PDF 파일 생성 완료: {pdf_path}")
         
         return jsonify({
             'message': 'success',
@@ -135,7 +222,6 @@ def download_pdf(file_id):
 
 @app.route('/api/cleanup-pdf', methods=['POST'])
 def cleanup_pdf():
-    # navigator.sendBeacon은 주로 text/plain 형태의 JSON을 보냅니다.
     data = request.json
     if request.data and not data:
         import json
@@ -151,11 +237,8 @@ def cleanup_pdf():
             if os.path.exists(pdf_path):
                 try:
                     os.remove(pdf_path)
-                    print(f"[TRACKING 🗑️] 임시 PDF 파일이 정상적으로 삭제되었습니다: {pdf_path}")
                 except Exception as e:
-                    print(f"[TRACKING ❌] 임시 PDF 파일 삭제 실패: {pdf_path}, 원인: {e}")
-            else:
-                print(f"[TRACKING ⚠️] 삭제하려는 파일이 이미 존재하지 않습니다: {pdf_path}")
+                    pass
     return '', 204
 
 if __name__ == '__main__':
