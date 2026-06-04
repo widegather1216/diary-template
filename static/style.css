@@ -13,7 +13,7 @@
     --cover-bg: #0F172A;
     --cover-spine: #0B1120;
     
-    --gold-foil: linear-gradient(135deg, #D4AF37 0%, #FFF5D1 40%, #D4AF37 60%, #AA771C 100%);
+    --gold-foil: linear-gradient(135deg, #D4AF37 0%, #FFF5D1 30%, #D4AF37 50%, #AA771C 75%, #D4AF37 100%);
     --spring-easing: cubic-bezier(0.76, 0, 0.24, 1);
 }
 
@@ -85,9 +85,12 @@ body {
     background-position: 0% center;
 }
 .cover-content:has(.open-btn:hover) .cover-title {
-    animation: goldShimmer 8s linear infinite; /* 버튼 오버 시에만 천천히 반사 */
+    animation: goldShimmer 6s linear infinite; /* 밝아지는 속도와 어두워지는 속도를 3초씩 동일하게 맞춤 */
 }
-@keyframes goldShimmer { to { background-position: 200% center; } }
+@keyframes goldShimmer { 
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
 .cover-subtitle { font-family: 'Playfair Display', serif; font-style: italic; color: #94A3B8; font-size: 1.1rem; margin-bottom: 48px; }
 
 .open-btn {
@@ -296,13 +299,13 @@ select { appearance: none; -webkit-appearance: none; padding-right: 36px; cursor
     100% { width: 312px; height: 452px; border-color: #CBD5E1; }
 }
 
-/* 로딩 애니메이션 (테두리를 넘어가지 않게 최대 너비 조정 및 아날로그 스케치 이징 적용) */
-.loading-animation-container .l1 { --target-width: 140px; top: 40px; left: 30px; animation: drawLoadingH 2.5s cubic-bezier(0.4, 0, 0.2, 1) 0.5s infinite; }
-.loading-animation-container .l2 { --target-width: 100px; top: 70px; left: 30px; animation: drawLoadingH 2.5s cubic-bezier(0.4, 0, 0.2, 1) 0.7s infinite; }
-.loading-animation-container .l3 { --target-width: 252px; top: 100px; left: 30px; animation: drawLoadingH 2.5s cubic-bezier(0.4, 0, 0.2, 1) 0.9s infinite; }
-.loading-animation-container .b1 { --target-width: 252px; top: 150px; left: 30px; height: 140px; animation: drawLoadingBox 2.5s cubic-bezier(0.4, 0, 0.2, 1) 1.1s infinite; }
-.loading-animation-container .v1 { top: 0; left: 60px; height: 100%; width: 2px; background: #CBD5E1; animation: drawLoadingV 2.5s cubic-bezier(0.4, 0, 0.2, 1) 1.3s infinite; }
-.loading-animation-container .b2 { --target-width: 252px; top: 310px; left: 30px; height: 100px; animation: drawLoadingBox 2.5s cubic-bezier(0.4, 0, 0.2, 1) 1.5s infinite; }
+/* 로딩 애니메이션 (테두리를 넘어가지 않게 최대 너비 조정 및 아날로그 스케치 이징 적용, 기존 대비 0.7배 속도로 감속) */
+.loading-animation-container .l1 { --target-width: 140px; top: 40px; left: 30px; animation: drawLoadingH 3.5s cubic-bezier(0.4, 0, 0.2, 1) 0.7s infinite; }
+.loading-animation-container .l2 { --target-width: 100px; top: 70px; left: 30px; animation: drawLoadingH 3.5s cubic-bezier(0.4, 0, 0.2, 1) 1.0s infinite; }
+.loading-animation-container .l3 { --target-width: 252px; top: 100px; left: 30px; animation: drawLoadingH 3.5s cubic-bezier(0.4, 0, 0.2, 1) 1.3s infinite; }
+.loading-animation-container .b1 { --target-width: 252px; top: 150px; left: 30px; height: 140px; animation: drawLoadingBox 3.5s cubic-bezier(0.4, 0, 0.2, 1) 1.6s infinite; }
+.loading-animation-container .v1 { top: 0; left: 60px; height: 100%; width: 2px; background: #CBD5E1; animation: drawLoadingV 3.5s cubic-bezier(0.4, 0, 0.2, 1) 1.9s infinite; }
+.loading-animation-container .b2 { --target-width: 252px; top: 310px; left: 30px; height: 100px; animation: drawLoadingBox 3.5s cubic-bezier(0.4, 0, 0.2, 1) 2.2s infinite; }
 
 @keyframes drawLoadingH { 0% { width: 0; opacity: 0; } 10% { opacity: 1; } 40% { width: var(--target-width); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes drawLoadingV { 0% { height: 0; opacity: 0; } 10% { opacity: 1; } 40% { height: 100%; opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
