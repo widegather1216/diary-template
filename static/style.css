@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,400;1,500&display=swap');
 
+@font-face {
+    font-family: 'KyoboHandwriting';
+    src: url('./fonts/KyoboHandwriting2025lyb.otf') format('opentype'),
+         url('./fonts/KyoboHandwriting2025lyb.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 :root {
     /* Premium Color Palette */
     --bg-color: #e5e5e5;
@@ -73,14 +81,15 @@ body {
 
 .diary-wrapper.is-open .cover-panel { opacity: 0; pointer-events: none; transform: rotateY(-110deg); }
 
-.cover-content { text-align: center; padding: 40px; position: relative; z-index: 15; }
-.cover-logo {
-    display: inline-flex; justify-content: center; align-items: center;
-    width: 60px; height: 60px; background: transparent; color: #D4AF37; margin-bottom: 24px;
-    border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 50%; box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
+.cover-content {
+    display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+    width: 100%; height: 100%; padding: 140px 40px 100px 40px; position: relative; z-index: 15; text-align: center;
+}
+.cover-text {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
 }
 .cover-title {
-    font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 600; letter-spacing: 0.02em; margin-bottom: 12px;
+    font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 600; letter-spacing: 0.02em;
     background: var(--gold-foil); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
     background-position: 0% center;
 }
@@ -91,11 +100,12 @@ body {
     0% { background-position: 0% center; }
     100% { background-position: 200% center; }
 }
-.cover-subtitle { font-family: 'Playfair Display', serif; font-style: italic; color: #94A3B8; font-size: 1.1rem; margin-bottom: 48px; }
+.cover-subtitle { font-family: 'KyoboHandwriting', 'Playfair Display', serif; color: #94A3B8; font-size: 1.3rem; }
 
 .open-btn {
+    font-family: 'KyoboHandwriting', 'Inter', sans-serif;
     background: transparent; color: #E2E8F0; border: 1px solid rgba(255,255,255,0.2); padding: 14px 36px;
-    border-radius: 30px; font-size: 0.95rem; font-weight: 400; letter-spacing: 0.05em; cursor: pointer;
+    border-radius: 30px; font-size: 1.1rem; font-weight: 400; letter-spacing: 0.05em; cursor: pointer;
     transition: all 0.3s var(--spring-easing); backdrop-filter: blur(4px);
 }
 .open-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
