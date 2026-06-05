@@ -36,17 +36,17 @@ body {
 }
 
 .diary-wrapper {
-    width: 100%; max-width: 440px; height: 600px;
+    width: 90vw; max-width: 440px; aspect-ratio: 44 / 60; height: auto;
     background: var(--cover-bg); border-radius: 4px 18px 18px 4px; 
     box-shadow: -5px 0 15px rgba(0,0,0,0.1), 15px 15px 50px rgba(0,0,0,0.15), inset 6px 0 12px rgba(255,255,255,0.05);
     position: relative; border: 1px solid rgba(255,255,255,0.05); border-left: 8px solid var(--cover-spine);
-    transition: max-width 1s var(--spring-easing), border-radius 1s var(--spring-easing), border-left 0.8s ease, background-color 0.1s;
+    transition: max-width 1s var(--spring-easing), width 1s var(--spring-easing), aspect-ratio 1s var(--spring-easing), border-radius 1s var(--spring-easing), border-left 0.8s ease, background-color 0.1s;
     overflow: hidden;
     perspective: 1500px; /* 3D 효과를 위한 원근감 추가 */
 }
 
 .diary-wrapper.is-open {
-    max-width: 880px; border-radius: 12px; border-left: 1px solid rgba(0,0,0,0.05); background: var(--paper-bg);
+    width: 95vw; max-width: 880px; aspect-ratio: 88 / 60; border-radius: 12px; border-left: 1px solid rgba(0,0,0,0.05); background: var(--paper-bg);
 }
 
 /* -------------------------------- */
@@ -89,7 +89,7 @@ body {
     display: flex; flex-direction: column; align-items: center; gap: 16px;
 }
 .cover-title {
-    font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 600; letter-spacing: 0.02em;
+    font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 600; letter-spacing: 0.02em;
     background: var(--gold-foil); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
     background-position: 0% center;
 }
@@ -100,12 +100,12 @@ body {
     0% { background-position: 0% center; }
     100% { background-position: 200% center; }
 }
-.cover-subtitle { font-family: 'KyoboHandwriting', 'Playfair Display', serif; color: #94A3B8; font-size: 1.3rem; }
+.cover-subtitle { font-family: 'KyoboHandwriting', 'Playfair Display', serif; color: #94A3B8; font-size: clamp(1rem, 2.5vw, 1.3rem); }
 
 .open-btn {
     font-family: 'KyoboHandwriting', 'Inter', sans-serif;
     background: transparent; color: #E2E8F0; border: 1px solid rgba(255,255,255,0.2); padding: 14px 36px;
-    border-radius: 30px; font-size: 1.1rem; font-weight: 400; letter-spacing: 0.05em; cursor: pointer;
+    border-radius: 30px; font-size: clamp(0.95rem, 1.5vw, 1.1rem); font-weight: 400; letter-spacing: 0.05em; cursor: pointer;
     transition: all 0.3s var(--spring-easing); backdrop-filter: blur(4px);
 }
 .open-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
@@ -121,6 +121,8 @@ body {
 
 /* Form UI Details */
 .form-panel { padding: 48px 40px; display: flex; flex-direction: column; justify-content: center; }
+.form-row { display: flex; gap: 16px; }
+.flex-1 { flex: 1; }
 .form-group { margin-bottom: 24px; }
 label { display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-primary); letter-spacing: 0.01em; }
 .optional { color: var(--text-secondary); font-weight: 400; font-size: 0.8rem; }
@@ -344,9 +346,26 @@ body.is-generating-mode .sketch-paper { animation: pulsePaper 3s ease-in-out inf
 .download-btn:hover { background: #0F172A; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(30, 41, 59, 0.3); }
 
 @media (max-width: 900px) {
-    .diary-wrapper.is-open { flex-direction: column; max-width: 440px; height: auto; }
+    .diary-wrapper.is-open { flex-direction: column; width: 90vw; max-width: 440px; aspect-ratio: auto; height: auto; }
     .diary-pages { position: relative; flex-direction: column; height: auto; }
     .page { flex: none; height: auto; }
     .left-page, .right-page { box-shadow: none; }
     .right-page { border-top: 1px solid var(--border-light); min-height: 400px; }
+}
+
+@media (max-width: 600px) {
+    body { padding: 10px; }
+    .diary-wrapper { width: 100vw; max-width: 100vw; aspect-ratio: auto; height: auto; min-height: 90vh; border-radius: 8px; }
+    .diary-wrapper.is-open { width: 100vw; max-width: 100vw; aspect-ratio: auto; border-radius: 8px; }
+    .cover-content { padding: 80px 20px 60px 20px; }
+    .form-panel { padding: 30px 20px; }
+    
+    /* 내부 요소 반응형 처리 */
+    .form-row { flex-direction: column; gap: 16px; }
+    .form-group { width: 100%; }
+    
+    /* 로딩 애니메이션 스케일 축소 */
+    .loading-animation-container .loading-outer-box {
+        transform: translate(-50%, -50%) scale(0.85); 
+    }
 }
