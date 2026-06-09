@@ -52,14 +52,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (titleInput && sketchOuterBox && sketchLinesContainer) {
         titleInput.addEventListener('input', (e) => {
             const val = e.target.value.trim();
+            sketchTitleText.textContent = val;
+            
             if (val !== '') {
                 sketchOuterBox.classList.add('is-active');
-                sketchTitleText.textContent = val;
                 
                 // 제목만 입력해도 캔버스가 꽉 차 보이도록 선을 같이 그려줍니다.
                 if (!hasRedrawnLines && !sketchLinesContainer.classList.contains('is-active')) {
                     sketchLinesContainer.classList.add('is-active');
                 }
+            } else {
+                sketchOuterBox.classList.remove('is-active');
             }
         });
     }
