@@ -40,12 +40,12 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
     
     dynamic_rules = ""
     if design_mode == 'guide':
-        dynamic_rules = """7. CRITICAL: For guide mode, you MUST use `display: flex; flex-direction: column` and NEVER use `<table>`. Check that all vertical elements have explicit heights that are multiples of 20px. NEVER use `flex: 1` for heights.
-8. CRITICAL: You MUST prevent double borders. The outermost wrapper MUST have ONLY `border-top` and `border-left`. ALL inner boxes MUST have ONLY `border-bottom` and `border-right`. DO NOT use `border: 1px solid #333` anywhere.
-9. CRITICAL: For bottom note areas, DO NOT use CSS gradients. MUST apply `class="lined-bg"` to a `<div>` to render the SVG lined background."""
+        dynamic_rules = """8. CRITICAL: For guide mode, you MUST use `display: flex; flex-direction: column` and NEVER use `<table>`. Check that all vertical elements have explicit heights that are multiples of 20px. NEVER use `flex: 1` for heights.
+9. CRITICAL: You MUST prevent double borders. The outermost wrapper MUST have ONLY `border-top` and `border-left`. ALL inner boxes MUST have ONLY `border-bottom` and `border-right`. DO NOT use `border: 1px solid #333` anywhere.
+10. CRITICAL: For bottom note areas, DO NOT use CSS gradients. MUST apply `class="lined-bg"` to a `<div>` to render the SVG lined background."""
     else:
-        dynamic_rules = """7. CRITICAL: For grid rows/columns, use flex: 1; so they divide space evenly.
-8. CRITICAL: For bottom note areas, MUST apply background-image: repeating-linear-gradient(white, white 19px, #e5e7eb 20px); to fill the remaining space with lines."""
+        dynamic_rules = """8. CRITICAL: For grid rows/columns, use flex: 1; so they divide space evenly.
+9. CRITICAL: For bottom note areas, MUST apply background-image: repeating-linear-gradient(white, white 19px, #e5e7eb 20px); to fill the remaining space with lines."""
         
     review_prompt = f"""
 Review the generated HTML below and fix any violations of the design rules:
@@ -54,8 +54,9 @@ Review the generated HTML below and fix any violations of the design rules:
 3. Ensure text inside boxes is vertically centered using `display: flex; align-items: center; justify-content: center;`.
 4. CRITICAL: NEVER use literal underscores (`__________`) for blank spaces! Remove them entirely. Instead, use a flex container with `border-bottom` for the blank area.
 5. CRITICAL: Ensure `overflow: hidden;` is applied to all boxes and cells so text doesn't spill out. DO NOT use `white-space: nowrap;` on large sections.
-6. CRITICAL: For text label + blank line rows, DO NOT hardcode widths. Use `white-space: nowrap;` on the label, and `flex: 1; border-bottom: 1px solid #333;` on the blank area. The parent MUST have `align-items: flex-end;` so the text perfectly aligns with the bottom line without excess padding.
-7. CRITICAL: If you use a grid/table structure where cells have right/bottom borders, ensure the wrapper container has `border-top` and `border-left` so the outer boundaries are not missing.
+6. CRITICAL: For text label + blank line rows, DO NOT hardcode widths. Use `white-space: nowrap;` on the label, and `flex: 1; border-bottom: 1px solid #333;` on the blank area. The parent MUST have `align-items: flex-end;`.
+7. CRITICAL: If you use a grid/table structure where cells have right/bottom borders, ensure the wrapper container has `border-top` and `border-left`.
+8. CRITICAL: Replace `white-space: nowrap;` on the main Title with `word-break: keep-all; overflow-wrap: normal;` so words wrap at spaces but do not break in the middle of a word.
 {dynamic_rules}
 Generated HTML:
 ```html

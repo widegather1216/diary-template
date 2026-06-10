@@ -20,7 +20,8 @@ Requirements:
    - Do NOT use `position: absolute` for layout, it causes overlap. Use Flexbox `gap`.
    - To prevent text clipping, NEVER use a `line-height` smaller than the `font-size`. 
    - To vertically center text inside boxes, use `display: flex; align-items: center; justify-content: center;`.
-   - To prevent text from breaking unexpectedly (e.g., 'SUN', 'Author:'), ALWAYS apply `white-space: nowrap;` to short labels, days of the week, and key-value prefixes. The main Title (Form Name) at the top MUST also have `white-space: nowrap;` to prevent single words from breaking into multiple lines.
+   - To prevent short text from breaking unexpectedly (e.g., 'SUN', 'Author:'), ALWAYS apply `white-space: nowrap;` to short labels, days of the week, and key-value prefixes.
+   - DO NOT use `white-space: nowrap;` on the main Title (Form Name) because it prevents multiple words from breaking naturally at spaces. Instead, use `word-break: keep-all; overflow-wrap: normal;` on the Title so single words stay intact but long phrases can wrap to the next line.
    - For grid structures, if cells use right/bottom borders, the parent container MUST have `border-top` and `border-left` so the outermost lines are not missing.
    - For blank underlines (e.g., Year/Month, Date), NEVER use literal underscores (`__________`). They cause misalignment and weird padding. Instead, use a flex container (`display: flex; align-items: flex-end;`) where the label has `white-space: nowrap; margin-right: 5px;` and the blank space has `flex: 1; border-bottom: 1px solid #333; height: 1.5em;`. This guarantees perfectly aligned baselines and no extra bottom padding.
 5. DYNAMIC REPEAT MACRO (CRITICAL): If you need to generate a long grid or repeating elements (e.g., 35 calendar cells, 31 habit boxes, 24 hours), DO NOT write them manually. 
@@ -60,7 +61,8 @@ Requirements:
 9. TEXT HANDLING (CRITICAL): To prevent text from escaping its box and ruining the layout:
    - NEVER use literal underscores (`__________`) for blanks! The `border-bottom` of your boxes already acts as a writing line. Use empty space instead.
    - ALWAYS apply `overflow: hidden;` to all your cells and boxes.
-   - NEVER use `white-space: nowrap;` on large cells, BUT you MUST use `white-space: nowrap;` on the main Title (Form Name) so it doesn't line-break if it's a short word.
+   - NEVER use `white-space: nowrap;` on large cells.
+   - For the main Title (Form Name), DO NOT use `white-space: nowrap;`. Instead, use `word-break: keep-all; overflow-wrap: normal;` so single words don't break in the middle, but multiple words can wrap at spaces.
 10. FLEX HORIZONTAL LAYOUT (CRITICAL): Do NOT hardcode pixel widths (e.g., `width: 200px`) for row subdivisions.
     - For text labels (like 'Author:', 'Date:'), use `padding: 0 10px; white-space: nowrap;` so they size automatically and stay on one line.
     - For the blank input areas next to them, use `flex: 1; border-bottom: 1px solid #333;` so they stretch to fill the rest of the row.
