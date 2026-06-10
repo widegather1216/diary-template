@@ -36,7 +36,9 @@ Requirements:
    - You MUST generate a 9x9 layout built as a 3x3 outer grid where each of the 9 outer cells contains an inner 3x3 grid.
    - Use nested repeat macros for this (4 levels of `<repeat>` tags). Make the outer 3x3 borders thicker than the inner 3x3 borders.
    For ALL general grid/table structures:
-   - You MUST apply `flex: 1; min-width: 0; box-sizing: border-box;` to the flex items (cells) to guarantee they shrink/grow evenly without overflowing or breaking the layout.
+   - To prevent columns from misaligning, you MUST apply `min-width: 0; box-sizing: border-box;` to all cells.
+   - For an even grid (like calendars), use `flex: 1;` on all cells.
+   - For an uneven grid (like a ledger with 'Date' and 'Description'), you MUST use exact matching `flex` values (e.g., `flex: 1` and `flex: 3`) OR exact `width` percentages (e.g., `width: 20%;` and `width: 60%;`) on BOTH the header row and the repeating data rows. This guarantees vertical lines align perfectly.
    For all other non-calendar/non-grid formats, design freely.
 7. SPACE UTILIZATION (FILL {ch}px): You MUST visually fill the entire {ch}px height. For bottom note areas, use `flex-grow: 1;` and CSS `repeating-linear-gradient(white, white 19px, #e5e7eb 20px)` to fill the remaining space with lines. Apply `display: flex; flex-direction: column; min-height: 100%;` to the main wrapper.
 8. CONTENT PURITY (CRITICAL): NEVER output instructional texts, hints, or placeholders in parentheses (e.g., "(Draw a long line across)"). Output ONLY the actual planner content.
@@ -61,7 +63,8 @@ Requirements:
    Use the custom `<repeat count="N">` tag. You MUST use sequence variables for sequential numbers/times: {{i}} (0,1,2...), {{i+1}} (1,2...), {{i+6:02d}} (06,07...).
    Example: `<repeat count="10"><div style="height: 20px; border-bottom: 1px solid #333; border-right: 1px solid #333; box-sizing: border-box;"></div></repeat>`
 8. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title.
-   - For ANY grid structure (calendar, table, etc), you MUST apply `flex: 1; min-width: 0; box-sizing: border-box;` to the grid cells so they divide space perfectly without overflowing.
+   - For ANY grid structure (calendar, table, etc), you MUST apply `min-width: 0; box-sizing: border-box;` to the cells.
+   - For uneven grids (like a ledger), you MUST use exact matching `flex` values (e.g., `flex: 1` and `flex: 3`) OR exact `width` percentages on BOTH the header row and the data rows so vertical lines align perfectly.
    ONLY IF it is a calendar/planner:
    - DO NOT pre-fill any dates, numbers, or placeholder years. Leave all calendar cells completely blank. For Year/Month, just provide empty labeled boxes.
    - Use `<repeat count="5"><div style="display: flex; width: 100%;"><repeat count="7"><div style="height: 100px; flex: 1; min-width: 0; border-bottom: 1px solid #333; border-right: 1px solid #333; box-sizing: border-box; overflow: hidden;"></div></repeat></div></repeat>` for the calendar grid.
