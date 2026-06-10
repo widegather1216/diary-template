@@ -347,10 +347,12 @@ body.is-generating-mode .sketch-paper { animation: pulsePaper 3s ease-in-out inf
 
 @media (max-width: 900px) {
     .diary-wrapper.is-open { flex-direction: column; width: 90vw; max-width: 27.5rem; aspect-ratio: auto; height: auto; }
-    .diary-pages { position: relative; flex-direction: column; height: auto; }
+    .diary-pages { position: relative; flex-direction: column; height: auto; display: flex; }
     .page { flex: none; height: auto; }
     .left-page, .right-page { box-shadow: none; }
-    .right-page { border-top: 1px solid var(--border-light); min-height: 25rem; }
+    .right-page-wrapper { border-top: 1px solid var(--border-light); min-height: 25rem; position: relative; }
+    .flip-page { position: absolute; width: 100%; height: 100%; }
+    .base-page { position: absolute; width: 100%; height: 100%; }
 }
 
 @media (max-width: 600px) {
@@ -376,3 +378,87 @@ body.is-generating-mode .sketch-paper { animation: pulsePaper 3s ease-in-out inf
 @media (min-width: 1600px) { html { font-size: 24px; } }
 @media (min-width: 1900px) { html { font-size: 28px; } } /* 1.75배 확대 (최대 약 1540px) */
 @media (min-width: 2100px) { html { font-size: 32px; } } /* 2.0배 확대 (최대 약 1760px) */
+
+/* -------------------------------- */
+/* Mode Transitions                 */
+/* -------------------------------- */
+.preview-mode {
+    position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+    transition: opacity 0.5s ease;
+    opacity: 1; z-index: 2;
+}
+.preview-mode.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.sketch-mode {
+    position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+    transition: opacity 0.5s ease;
+    opacity: 0; z-index: 1; pointer-events: none;
+}
+.sketch-mode.active {
+    opacity: 1; pointer-events: auto; z-index: 3;
+}
+
+/* -------------------------------- */
+/* New UI: 3D Page Flip & Gallery   */
+/* -------------------------------- */
+.right-page-wrapper {
+    flex: 1 0 50%;
+    position: relative;
+    perspective: 2500px;
+}
+
+.page-sheet {
+    position: absolute; right: 0; top: 0; width: 100%; height: 100%;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+.page-sheet.is-flipped {
+    transform: rotateY(-180deg);
+}
+.page-sheet > .front, .page-sheet > .back {
+    position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    overflow: hidden;
+}
+.page-sheet > .front {
+    background: var(--paper-shade);
+    box-shadow: inset 15px 0 25px -15px rgba(0,0,0,0.12);
+    pointer-events: auto;
+    transform: rotateY(0deg) translateZ(1px);
+}
+.page-sheet > .back {
+    background: var(--paper-bg);
+    transform: rotateY(180deg) translateZ(1px);
+    box-shadow: inset -15px 0 25px -15px rgba(0,0,0,0.12);
+    pointer-events: none;
+}
+.page-sheet.is-flipped > .front {
+    pointer-events: none;
+}
+.page-sheet.is-flipped > .back {
+    pointer-events: auto;
+}
+
+.gallery-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; }
+.gallery-content { text-align: center; overflow-y: auto; height: 100%; padding: 2.5rem 1.5rem; scrollbar-width: none; }
+.gallery-content::-webkit-scrollbar { display: none; }
+.gallery-content h2 { font-family: 'Playfair Display', serif; color: var(--text-primary); font-size: 1.2rem; margin-bottom: 0.5rem; margin-top: 1rem; }
+.style-preview { margin-bottom: 1.5rem; }
+.style-preview img { width: 90%; max-width: 18rem; border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.03); }
+
+.page-turn-btn {
+    position: absolute; bottom: 1.5rem; background: none; border: none; font-family: 'Inter', sans-serif;
+    color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; padding: 0.5rem;
+    cursor: pointer; transition: color 0.3s;
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    transform: translateZ(2px);
+}
+.page-turn-btn:hover { color: #D4AF37; }
+.next-btn { right: 1.5rem; }
+.prev-btn { left: 1.5rem; }
+
+.front .visual-panel { position: absolute; width: 100%; height: 100%; }

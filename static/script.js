@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('generator-form');
     const titleInput = document.getElementById('title');
     const descInput = document.getElementById('description');
-    const pageSizeSelect = document.getElementById('pageSize');
     const generateBtn = document.getElementById('generate-btn');
     const btnText = document.querySelector('.btn-text');
     
@@ -31,9 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (openDiaryBtn) {
         openDiaryBtn.addEventListener('click', () => {
             if (diaryBand) {
-                // 고무줄 먼저 풀기
                 diaryBand.classList.add('is-unbanding');
-                // 고무줄 튕겨져 나가는 시간(400ms) 대기 후 책 펼치기
                 setTimeout(() => {
                     appWrapper.classList.add('is-open');
                     setTimeout(() => { titleInput.focus(); }, 800);
@@ -44,6 +41,39 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // 1.5. 다이어리 3D 북 플립 (Book Flip) 로직
+    // 전역 함수로 노출하여 HTML의 onclick 속성에서 바로 호출할 수 있게 함
+    window.flipNext = function(sheetIndex) {
+        const sheet = document.getElementById(`sheet-${sheetIndex}`);
+        if (!sheet) return;
+        
+        sheet.classList.add('is-flipped');
+        
+        // 애니메이션 중간 지점(0.6s)에서 z-index를 조정하여 겹침 순서를 변경
+        // 1.2s 애니메이션의 정중앙(종이가 수직으로 세워진 순간)에 z-index를 바꿔야 팝핑 현상이 없습니다.
+        setTimeout(() => {
+            sheet.dataset.originalZ = sheet.style.zIndex;
+            // 넘어간 장은 왼쪽 스택에 쌓이므로, 나중에 넘어간 장(더 큰 sheetIndex)이 
+            // 위로 올라오도록 z-index를 새롭게 부여 (예: sheet-1 -> 11, sheet-2 -> 12)
+            sheet.style.zIndex = (10 + sheetIndex).toString();
+        }, 600);
+    };
+
+    window.flipPrev = function(sheetIndex) {
+        const sheet = document.getElementById(`sheet-${sheetIndex}`);
+        if (!sheet) return;
+        
+        sheet.classList.remove('is-flipped');
+        
+        // 되돌아갈 때도 종이가 수직으로 세워지는 중간 지점(0.6s)에서 원래 z-index로 복구
+        // 즉시 복구하면 아직 왼쪽 스택에 있을 때 z-index가 낮아져 밑장 빼기 현상이 발생함
+        setTimeout(() => {
+            if (sheet.dataset.originalZ) {
+                sheet.style.zIndex = sheet.dataset.originalZ;
+            }
+        }, 600);
+    };
 
     // 2. Interactive Blueprint 로직
     let hasRedrawnLines = false;
@@ -101,8 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const title = titleInput.value.trim();
         const description = descInput.value.trim();
-        const pageSize = pageSizeSelect.value;
+        const pageSize = document.getElementById('pageSize').value;
         const designMode = document.querySelector('input[name="designMode"]:checked').value;
+        const styleTheme = document.getElementById('styleTheme').value;
 
         if (!title) {
             alert('양식명은 필수 입력 항목입니다.');
@@ -139,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ title, description, pageSize, designMode })
+                body: JSON.stringify({ title, description, pageSize, designMode, styleTheme })
             });
 
             if (!response.ok) {

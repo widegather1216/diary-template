@@ -22,6 +22,7 @@ def generate_pdf_route():
     page_size = data.get('pageSize', 'A4')
     design_mode = data.get('designMode', 'print')
     orientation = data.get('orientation')
+    style_theme = data.get('styleTheme', 'Minimal')
     
     if not title:
         return jsonify({'error': 'Title is required'}), 400
@@ -34,7 +35,7 @@ def generate_pdf_route():
             orientation = "portrait"
         
     try:
-        master_html = generate_layout_html(title, description, page_size, design_mode, orientation)
+        master_html = generate_layout_html(title, description, page_size, design_mode, orientation, style_theme)
         file_id, pdf_path = generate_pdf(master_html)
         
         return jsonify({

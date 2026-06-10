@@ -2,13 +2,13 @@ from core.model_config import get_gemini_model
 from core.prompts import get_system_prompts
 from core.renderer import get_page_config, assemble_master_html
 
-def generate_layout_html(title, description, page_size, design_mode, orientation):
+def generate_layout_html(title, description, page_size, design_mode, orientation, style_theme='Minimal'):
     """
     Generates layout HTML using Gemini API with a 2-pass verification process.
     """
     model = get_gemini_model()
     config = get_page_config(page_size, orientation)
-    SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(config['cw'], config['ch'])
+    SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(config['cw'], config['ch'], style_theme)
     
     prompt = f"""
     Title (Form Name): {title}
@@ -52,9 +52,9 @@ Review the generated HTML below and fix any violations of the design rules:
 1. CRITICAL: The outermost wrapper MUST have `padding: 0;`. Remove any padding on it.
 2. CRITICAL: DO NOT include instructional texts in parentheses (e.g. `(Draw a line)`).
 3. Ensure text inside boxes is vertically centered using `display: flex; align-items: center; justify-content: center;`.
-4. CRITICAL: NEVER use literal underscores (`__________`) for blank spaces! Remove them entirely.
+4. CRITICAL: NEVER use literal underscores (`__________`) for blank spaces! Remove them entirely. Instead, use a flex container with `border-bottom` for the blank area.
 5. CRITICAL: Ensure `overflow: hidden;` is applied to all boxes and cells so text doesn't spill out. DO NOT use `white-space: nowrap;` on large sections.
-6. CRITICAL: For row subdivisions, DO NOT hardcode pixel widths. Use `padding: 0 10px; white-space: nowrap;` for labels and `flex: 1;` for adjacent blank input areas.
+6. CRITICAL: For text label + blank line rows, DO NOT hardcode widths. Use `white-space: nowrap;` on the label, and `flex: 1; border-bottom: 1px solid #333;` on the blank area. The parent MUST have `align-items: flex-end;` so the text perfectly aligns with the bottom line without excess padding.
 7. CRITICAL: If you use a grid/table structure where cells have right/bottom borders, ensure the wrapper container has `border-top` and `border-left` so the outer boundaries are not missing.
 {dynamic_rules}
 Generated HTML:
