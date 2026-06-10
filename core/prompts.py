@@ -30,9 +30,9 @@ Requirements:
    Example 2: `<repeat count="35"><div class="cell"></div></repeat>`
 6. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title. ONLY IF the user requests a calendar/planner:
    - DO NOT pre-fill any dates, numbers (e.g., 1, 2, 3), or placeholder years (e.g., 202X). Leave all calendar cells completely blank. Leave the year/month area as a blank underline (e.g., `Year: _________`).
-   - Place the days of the week (SUN, MON... SAT) in a separate Flexbox row ABOVE the grid. For both these headers and the calendar cells, you MUST apply `flex: 1; min-width: 0; box-sizing: border-box;` so they perfectly divide the container into 7 equal columns regardless of text length.
-   - Use `<repeat count="35">` or `<repeat count="42">` for the calendar cells. Ensure these cells also have `flex: 1; min-width: 0; box-sizing: border-box;`.
-   For all other non-calendar formats, design freely using 20px multiples.
+   - Place the days of the week (SUN, MON... SAT) in a separate Flexbox row ABOVE the grid (`display: flex; width: 100%;`). For both these headers and the calendar cells, you MUST apply `flex: 1; min-width: 0; box-sizing: border-box;` so they perfectly divide the container into 7 equal columns regardless of text length.
+   - You MUST use a 5-row by 7-column nested repeat structure for the main calendar grid, for example: `<repeat count="5"><div style="display: flex; width: 100%;"><repeat count="7"><div class="calendar-cell" style="flex: 1; min-width: 0; box-sizing: border-box; min-height: 80px;"></div></repeat></div></repeat>`.
+   For all other non-calendar formats, design freely.
 7. SPACE UTILIZATION (FILL {ch}px): You MUST visually fill the entire {ch}px height. For bottom note areas, use `flex-grow: 1;` and CSS `repeating-linear-gradient(white, white 19px, #e5e7eb 20px)` to fill the remaining space with lines. Apply `display: flex; flex-direction: column; min-height: 100%;` to the main wrapper.
 8. CONTENT PURITY (CRITICAL): NEVER output instructional texts, hints, or placeholders in parentheses (e.g., "(Draw a long line across)"). Output ONLY the actual planner content.
 9. NO JAVASCRIPT: Output ONLY pure, static HTML/CSS. If you use `<script>`, you fail.
