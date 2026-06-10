@@ -30,8 +30,8 @@ Requirements:
    Example 2: `<repeat count="35"><div class="cell"></div></repeat>`
 6. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title. ONLY IF the user requests a calendar/planner:
    - DO NOT pre-fill any dates, numbers (e.g., 1, 2, 3), or placeholder years (e.g., 202X). Leave all calendar cells completely blank. Leave the year/month area as a blank underline (e.g., `Year: _________`).
-   - Place the days of the week (SUN, MON... SAT) in a separate Flexbox row ABOVE the grid. For both these headers and the calendar cells, DO NOT use fixed pixel widths. Use `flex: 1;` or `width: 14.28%;` so they evenly divide the container without overflowing when borders are added.
-   - Use `<repeat count="35">` or `<repeat count="42">` for the calendar cells.
+   - Place the days of the week (SUN, MON... SAT) in a separate Flexbox row ABOVE the grid. For both these headers and the calendar cells, you MUST apply `flex: 1; min-width: 0; box-sizing: border-box;` so they perfectly divide the container into 7 equal columns regardless of text length.
+   - Use `<repeat count="35">` or `<repeat count="42">` for the calendar cells. Ensure these cells also have `flex: 1; min-width: 0; box-sizing: border-box;`.
    For all other non-calendar formats, design freely using 20px multiples.
 7. SPACE UTILIZATION (FILL {ch}px): You MUST visually fill the entire {ch}px height. For bottom note areas, use `flex-grow: 1;` and CSS `repeating-linear-gradient(white, white 19px, #e5e7eb 20px)` to fill the remaining space with lines. Apply `display: flex; flex-direction: column; min-height: 100%;` to the main wrapper.
 8. CONTENT PURITY (CRITICAL): NEVER output instructional texts, hints, or placeholders in parentheses (e.g., "(Draw a long line across)"). Output ONLY the actual planner content.
@@ -57,7 +57,8 @@ Requirements:
    Example: `<repeat count="10"><div style="height: 20px; border-bottom: 1px solid #333; border-right: 1px solid #333; box-sizing: border-box;"></div></repeat>`
 8. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title. ONLY IF it is a calendar/planner:
    - DO NOT pre-fill any dates, numbers, or placeholder years. Leave all calendar cells completely blank. For Year/Month, just provide empty labeled boxes.
-   - Use `<repeat count="5"><div style="display: flex; width: 100%;"><repeat count="7"><div style="height: 100px; flex: 1; border-bottom: 1px solid #333; border-right: 1px solid #333; box-sizing: border-box; overflow: hidden;"></div></repeat></div></repeat>` for the calendar grid.
+   - Use `<repeat count="5"><div style="display: flex; width: 100%;"><repeat count="7"><div style="height: 100px; flex: 1; min-width: 0; border-bottom: 1px solid #333; border-right: 1px solid #333; box-sizing: border-box; overflow: hidden;"></div></repeat></div></repeat>` for the calendar grid.
+   - For the day headers (SUN, MON... SAT), you MUST also use `flex: 1; min-width: 0;` so they align perfectly with the grid below.
 9. TEXT HANDLING (CRITICAL): To prevent text from escaping its box and ruining the layout:
    - NEVER use literal underscores (`__________`) for blanks! The `border-bottom` of your boxes already acts as a writing line. Use empty space instead.
    - ALWAYS apply `overflow: hidden;` to all your cells and boxes.
