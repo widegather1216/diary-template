@@ -78,6 +78,35 @@ def process_repeat_macros(html_content):
     while pattern.search(html_content):
         html_content = pattern.sub(replacer, html_content)
     return html_content
+
+def snap_css_to_grid(content):
+    """
+    Finds vertical CSS properties and snaps their px values to the nearest multiple of 20.
+    """
+    props = ['height', 'min-height', 'max-height', 'margin', 'padding', 'margin-top', 'margin-bottom', 
+             'padding-top', 'padding-bottom', 'gap', 'row-gap', 'top', 'bottom', 'line-height']
+    
+    # Use (?<!-) to ensure we don't match "bottom" inside "border-bottom"
+    prop_pattern = r'(?<!-)\b(' + '|'.join(props) + r')\s*:([^;\"\'<]+)(;?)'
+    
+    def prop_replacer(match):
+        prop_name = match.group(1)
+        prop_values = match.group(2)
+        semicolon = match.group(3)
+        
+        def px_replacer(px_match):
+            val = float(px_match.group(1))
+            if val == 0:
+                return "0px"
+            snapped = int(round(val / 20.0) * 20)
+            if snapped == 0 and val > 0:
+                snapped = 20
+            return f"{snapped}px"
+            
+        snapped_values = re.sub(r'([\d\.]+)px', px_replacer, prop_values)
+        return f"{prop_name}:{snapped_values}{semicolon}"
+        
+    return re.sub(prop_pattern, prop_replacer, content, flags=re.IGNORECASE)
 def assemble_master_html(llm_output, design_mode, page_size, orientation='portrait'):
     """
     Cleans up the LLM-generated HTML and wraps it inside the strict page-container.
@@ -101,14 +130,33 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
     
     llm_body = process_repeat_macros(llm_body)
     
+    if design_mode == 'guide':
+        llm_style = snap_css_to_grid(llm_style)
+        llm_body = snap_css_to_grid(llm_body)
+    
     dot_css = ""
+    lined_bg_css = ""
     if design_mode == 'guide':
         bg_x = (config['W'] - cw) / 2
         bg_y = top_pos
+        # Crisp 1x1 dot at (0,0) to prevent WeasyPrint antialiasing blur
+        dot_svg = "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><rect x='0' y='0' width='1' height='1' fill='#b0b0b0'/></svg>"
+        import urllib.parse
+        dot_svg_encoded = urllib.parse.quote(dot_svg)
         dot_css = f"""
-    background-image: radial-gradient(circle, #b0b0b0 1px, transparent 1px) !important;
-    background-size: 20px 20px !important;
+    background-image: url("data:image/svg+xml,{dot_svg_encoded}") !important;
     background-position: {bg_x}px {bg_y}px !important;
+        """
+        lined_svg = "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><rect x='0' y='19' width='20' height='1' fill='#333'/></svg>"
+        lined_svg_encoded = urllib.parse.quote(lined_svg)
+        lined_bg_css = f"""
+.lined-bg {{
+    background-image: url("data:image/svg+xml,{lined_svg_encoded}") !important;
+    background-position: top !important;
+}}
+.page-container * {{
+    background-color: transparent !important;
+}}
         """
     
     css_page_size = f"{page_size} landscape" if orientation == "landscape" else page_size
@@ -142,6 +190,7 @@ body {{
     overflow: hidden !important;
 }}
 
+{lined_bg_css}
 {llm_style}
 </style>
 </head>

@@ -1,214 +1,71 @@
-# 10주차 칼로리카운터 — Oracle 배포 + GitHub Actions CI/CD
+# Diary Template Generator 📔
 
-> 이 zip은 10주차 수업에서 학생이 e-class로 받는 자료입니다.
-> 6주차에 만든 칼로리카운터 코드 + Docker + nginx + CI/CD가 모두 들어있어, **학생은 본인 ID와 HF_TOKEN만 입력하면** 한 차시 안에 본인 칼로리카운터가 `<id>-demo.aiweb2026.site`로 떠야 합니다.
+AI를 활용하여 사용자 맞춤형 다이어리 및 플래너 템플릿 PDF를 동적으로 생성하는 웹 애플리케이션입니다.
 
-상세 절차는 [`docs/10_week10_lesson.md`](../../docs/10_week10_lesson.md) 본 강의안 참고.
+## 🌟 주요 기능
 
----
+- **맞춤형 레이아웃 생성**: 사용자가 입력한 제목, 설명, 용지 크기(A4, A5, B5), 방향(가로/세로), 디자인 모드(일반/가이드)에 맞게 다이어리 양식을 자동 생성합니다.
+- **2-Pass AI 검증**: Google Gemini API를 활용해 레이아웃을 1차 생성하고, 디자인 규칙(예: 겹침 현상, 부적절한 여백, 구조적 오류 등) 위반 여부를 2차로 검증 및 교정하여 안정성을 극대화합니다.
+- **커스텀 반복 매크로 엔진 (`<repeat>`)**: AI 모델의 텍스트 출력 제한(토큰 리밋)을 우회하기 위해, 달력이나 습관 트래커와 같은 반복 UI 요소를 자체 매크로 처리기로 자동화합니다.
+- **그리드 스내핑 (Guide 모드)**: 수작업 기반 다이어리를 위한 가이드 모드에서는 AI가 생성한 CSS의 모든 세로 픽셀 값을 20px 배수로 강제 보정(Snap)하여 종이 도트 그리드 배경과 완벽하게 일치시킵니다.
+- **자동 파일 라이프사이클 관리**: 생성된 임시 PDF 파일이 무한정 쌓여 디스크 용량을 차지하지 않도록 브라우저 종료 시 삭제 API 호출 및 주기적 찌꺼기 파일(1시간 경과) 청소를 수행합니다.
 
-## 0. 진행 순서 — 두 단계로 나뉨 (헷갈리지 말 것)
+## 🛠️ 기술 스택
 
-```
-┌─────────────────────────┐    ┌─────────────────────────┐
-│  STAGE 1: 수동 배포      │    │  STAGE 2: 자동 배포      │
-│  (zip 업로드)           │    │  (CI/CD)                │
-│                        │ →  │                        │
-│  zip → scp → unzip     │    │  GitHub push           │
-│  → docker → nginx       │    │  → Actions → SSH       │
-│  → 시트 입력            │    │  → docker rebuild      │
-│                        │    │                        │
-│  목표: 한 번 떠 있는 것  │    │  목표: 앞으로 자동      │
-│  확인 (§ 3~6)           │    │  배포 되도록 (§ 7~8)    │
-└─────────────────────────┘    └─────────────────────────┘
-```
+- **Backend**: Python 3, Flask, Gunicorn
+- **AI Model**: Google Gemini (`google-generativeai`)
+- **PDF Rendering**: WeasyPrint
+- **Frontend**: HTML5, Vanilla JavaScript, CSS3
+- **Deployment**: Docker, docker-compose, Nginx
 
-**먼저 STAGE 1로 본인 도메인에 칼로리카운터가 뜨는 것 확인 → 그 다음 STAGE 2로 자동화.** STAGE 1을 건너뛰고 STAGE 2부터 시작하면 처음 동작 자체가 안 떠서 디버깅이 불가능.
+## 📂 프로젝트 핵심 구조
 
----
-
-## 1. zip 안에 들어있는 것
-
-```
-week10_calorie/
-├── README.md                        ← 이 파일
-├── .gitignore                       ← .env 제외 (필수)
-│
-├── app.py                           ← 6주차 칼로리카운터 코드
-├── model_config.py                  ← 모델 상수 + InferenceClient
-├── requirements.txt                 ← Python 의존성
-│
-├── Dockerfile                       ← 컨테이너 이미지 정의
-├── docker-compose.yml               ← 운영용 compose (메모리 제한, 헬스체크)
-├── .env.example                     ← HF_TOKEN 자리 (.env로 복사 후 입력)
-│
-├── nginx-calorie.conf               ← nginx reverse proxy (80번만, HTTPS는 Cloudflare가 처리)
-│
-└── .github/
-    └── workflows/
-        └── deploy.yml               ← GitHub Actions CI/CD 정의
+```text
+diary-template/
+├── app.py                   # Flask 앱 진입점 및 REST API 라우터
+├── core/                    # 코어 비즈니스 로직
+│   ├── generator.py         # 2-Pass 프롬프트 검증 및 모델 연동
+│   ├── model_config.py      # Gemini 모델 초기화 및 설정
+│   ├── pdf_manager.py       # 임시 PDF 파일 생성, 보관, 삭제(Garbage Collection)
+│   ├── prompts.py           # 모드별 시스템 프롬프트 관리
+│   └── renderer.py          # HTML 조립, 반복 매크로 치환 및 CSS 픽셀 보정 로직
+├── static/                  # 프론트엔드 정적 리소스 (JS, CSS, 커스텀 폰트)
+├── templates/               # Flask Jinja2 템플릿 (index.html)
+└── Dockerfile               # 배포용 Docker 이미지 빌드 파일
 ```
 
----
+## 🚀 실행 방법
 
-## 2. 학생이 직접 만들 것 — 단 3개
+### 로컬 환경에서 실행
 
-| 항목 | 내용 |
-|------|------|
-| `.env` | `cp .env.example .env` 후 `HF_TOKEN=hf_xxx` 입력 |
-| nginx 설정의 `__STUDENT_ID__` 치환 | `s01`, `s02` … 본인 ID로 |
-| 시트의 본인 행 입력 | Page Link `http://<본인 Public IP>` + Public IP 컬럼에 IP |
+1. 저장소를 클론하고 프로젝트 디렉토리로 이동합니다.
+2. 파이썬 가상 환경을 생성하고 의존성 패키지를 설치합니다.
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+3. 환경 변수 파일(`.env`)을 설정합니다.
+   ```bash
+   cp .env.example .env
+   ```
+   `.env` 파일을 열어 Gemini API 키 등을 알맞게 설정합니다.
+4. 애플리케이션을 실행합니다.
+   ```bash
+   python app.py
+   ```
+5. 웹 브라우저에서 `http://localhost:7860` 으로 접속합니다.
 
-나머지는 zip 동봉본 그대로 사용. **HTTPS 인증서는 학생이 만질 일 없음** — Cloudflare Universal SSL이 `*.aiweb2026.site` 자동 처리.
+### Docker를 이용한 실행
 
----
-
-## 3. 빠른 시작 (수업 중 슬롯 매핑)
-
-### ── STAGE 1: 수동 배포 (먼저 한 번 떠 있는 것 확인) ──
-
-### 3-1. Oracle 서버에 zip 업로드 (§ 4-2)
-
+Docker가 설치되어 있다면 아래 명령어로 즉시 구동할 수 있습니다.
 ```bash
-# 학생 PC에서
-scp -i ~/.ssh/oracle_key week10_calorie.zip ubuntu@<본인_IP>:~/
-
-# 서버에서
-ssh -i ~/.ssh/oracle_key ubuntu@<본인_IP>
-sudo apt install -y unzip          # OCI Ubuntu 22.04 cloud image에 기본 미포함
-unzip ~/week10_calorie.zip -d ~/calorie
-cd ~/calorie
+docker-compose up --build -d
 ```
+이후 `http://localhost:7860` 으로 접속하여 이용합니다.
 
-### 3-2. .env 작성 (§ 4-3)
+## 📡 주요 API 엔드포인트
 
-```bash
-cp .env.example .env
-vi .env
-# HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxx
-chmod 600 .env
-```
-
-### 3-3. 첫 컨테이너 기동 (§ 4-4)
-
-```bash
-docker compose up -d --build       # ~3분
-docker compose logs -f             # "Running on local URL" 확인
-curl -I http://127.0.0.1:7860      # HTTP/1.1 200 OK
-```
-
-### 3-4. nginx 설치 + 본인 ID 치환 (§ 5)
-
-```bash
-sudo apt update && sudo apt install -y nginx
-sudo cp ~/calorie/nginx-calorie.conf /etc/nginx/sites-available/calorie-counter
-sudo vi /etc/nginx/sites-available/calorie-counter
-# __STUDENT_ID__ → 본인 ID(s01, s02, ...) 치환
-
-sudo ln -s /etc/nginx/sites-available/calorie-counter /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-### 3-5. 시트에 본인 Public IP 입력 (§ 2 참고)
-
-분배 시트의 본인 행에서 **D열 (Public IP)**만 추가 입력:
-- D: **Public IP** = `<본인 Oracle Public IP>` (예: `168.110.127.64`, IP만)
-
-C열(Page Link)은 9주차에 본인 소개 페이지 URL로 이미 채워져 있음. Worker가 한 행을 두 매핑으로 풀어줌:
-- `s01.aiweb2026.site` → C (본인 소개 페이지)
-- `s01-demo.aiweb2026.site` → `http://D` (Oracle 데모)
-
-5분 안에 Cloudflare Worker 캐시 새로고침되어 `https://<id>-demo.aiweb2026.site` 자동 라우팅.
-
-브라우저 검증:
-```
-https://<본인ID>-demo.aiweb2026.site
-→ 자물쇠 (Cloudflare Universal SSL) + Gradio UI
-→ 음식 사진 업로드 → 칼로리 응답
-```
-
-**여기까지 STAGE 1 끝.** 본인 도메인에 칼로리카운터가 떠 있는 것 확인 후 STAGE 2로 진행.
-
-### ── STAGE 2: 자동 배포 (앞으로 push만 하면 자동 갱신) ──
-
-### 3-6. GitHub 리포 생성 + Secret 등록 (§ 7)
-
-```bash
-# 학생 PC에서, .env 빼고 push
-git clone https://github.com/<본인>/my-calorie-counter.git
-cd my-calorie-counter
-cp -r ~/Downloads/week10_calorie/* .
-
-# .gitignore가 .env 차단
-cat .gitignore | grep -E "^\.env$"
-
-git add .
-git commit -m "init: 10주차 칼로리카운터 + CI/CD"
-git push origin main
-```
-
-GitHub 리포 → Settings → Secrets → 4개 등록:
-- `SSH_HOST` = Oracle Public IP
-- `SSH_USER` = `ubuntu`
-- `SSH_KEY` = `~/.ssh/oracle_key` 전체 내용 (개행 포함)
-- `HF_TOKEN` = `hf_xxx`
-
-### 3-7. 첫 자동 배포 (§ 8-3)
-
-```bash
-# 학생 PC에서, my-calorie-counter 리포에 변경 push
-vi app.py    # title 한 글자 변경
-git commit -am "test: 첫 자동 배포"
-git push origin main
-```
-
-→ GitHub Actions 그린 체크 → `<id>-demo.aiweb2026.site` 새로고침 → 변경 즉시 반영.
-
-### 3-8. 9주차 페이지 "Live Demo" 살리기 (§ 9)
-
-```bash
-# 9주차 페이지 리포에서
-vi index.html
-# <a href="#">Live Demo (Coming Week 10)</a>
-# → <a href="https://<본인ID>-demo.aiweb2026.site" target="_blank">Live Demo</a>
-
-git commit -am "feat: Live Demo 링크 활성화"
-git push origin main
-```
-
-→ 1~2분 후 `<id>.aiweb2026.site` 새로고침 → 버튼이 살아남.
-
----
-
-## 4. 자주 막히는 함정
-
-| # | 증상 | 처리 |
-|---|------|------|
-| 1 | `Permissions 0644 for ssh key are too open` | `chmod 600 ~/.ssh/oracle_key` |
-| 2 | `Connection timed out` (SSH) | OCI Security List에서 22번 포트 허용 |
-| 3 | docker compose 첫 빌드 OOM | swap 2GB 설정 (§ 3-2) |
-| 4 | 외부에서 80번 접속 안 됨 | iptables REJECT 위에 ALLOW 추가 (§ 3-3) + Security List 80 ingress |
-| 5 | 502 Bad Gateway | `docker compose ps` → 죽었으면 `logs`로 OOM/HF_TOKEN 누락 확인 |
-| 6 | `<id>-demo.aiweb2026.site` 접속 시 404 "학생 페이지 등록 안 됨" | 시트 Page Link 비어있음 또는 5분 캐시 대기 |
-| 7 | 분석 무한 로딩 (UI는 뜸) | nginx WebSocket 헤더 누락 — `nginx-calorie.conf` 그대로 쓰면 OK |
-| 8 | GitHub Actions `Permission denied (publickey)` | SSH_KEY가 CRLF로 들어감. 개행 포함 통째로 다시 등록 |
-
----
-
-## 5. 학기 종료 후 인프라 유지
-
-| 자산 | 학기 종료 후 |
-|------|-------------|
-| Oracle Always Free 인스턴스 | 영구 무료. 본인 OCI 계정에서 관리 |
-| 본인 GitHub 리포 + Actions | 영구 무료 (Public 리포 무제한) |
-| `aiweb2026.site` 도메인 | 강사가 1년 후 갱신 안 함. 학기 한정 |
-| Cloudflare Worker 라우팅 | 강사 자산. 학기 종료 시 폐기 |
-| HF_TOKEN | 본인 계정. 영구 |
-
-→ 본인 도메인 구매(`Cloudflare_Domain_Setup_Guide.md`)로 학기 종료 후 본인 인프라로 이전 가능.
-
----
-
-**작성일**: 2026-05-06
-**관련 강의**: [10주차 강의안](../../docs/10_week10_lesson.md), [9주차 강의안](../../docs/09_week09_lesson.md)
+- `POST /api/generate-pdf`: 폼 데이터를 JSON 형식으로 받아 AI를 통해 레이아웃 HTML을 생성한 뒤 PDF로 변환합니다. 변환에 성공하면 고유 식별자인 `file_id`를 반환합니다.
+- `GET /api/download-pdf/<file_id>`: 생성 완료된 특정 `file_id`의 PDF 파일을 다운로드 형식으로 제공합니다.
+- `POST /api/cleanup-pdf`: 클라이언트가 다이어리를 다운로드했거나 탭을 닫았을 때, 낭비되는 스토리지 확보를 위해 임시 PDF를 즉시 삭제합니다.

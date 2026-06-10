@@ -40,8 +40,9 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
     
     dynamic_rules = ""
     if design_mode == 'guide':
-        dynamic_rules = """7. CRITICAL: For grid rows/columns or repeating elements, NEVER use fixed fractional pixel sizes (like height: 74px). Use flex: 1; so they divide space perfectly without breaking the 20px dot grid.
-8. CRITICAL: For bottom note areas or empty flex-grow sections, MUST apply background-image: repeating-linear-gradient(transparent, transparent 19px, #333 20px); to draw horizontal lines. DO NOT leave them completely empty."""
+        dynamic_rules = """7. CRITICAL: For guide mode, you MUST use `display: flex; flex-direction: column` and NEVER use `<table>`. Check that all vertical elements have explicit heights that are multiples of 20px. NEVER use `flex: 1` for heights.
+8. CRITICAL: You MUST prevent double borders. The outermost wrapper MUST have ONLY `border-top` and `border-left`. ALL inner boxes MUST have ONLY `border-bottom` and `border-right`. DO NOT use `border: 1px solid #333` anywhere.
+9. CRITICAL: For bottom note areas, DO NOT use CSS gradients. MUST apply `class="lined-bg"` to a `<div>` to render the SVG lined background."""
     else:
         dynamic_rules = """7. CRITICAL: For grid rows/columns, use flex: 1; so they divide space evenly.
 8. CRITICAL: For bottom note areas, MUST apply background-image: repeating-linear-gradient(white, white 19px, #e5e7eb 20px); to fill the remaining space with lines."""
@@ -51,9 +52,10 @@ Review the generated HTML below and fix any violations of the design rules:
 1. CRITICAL: The outermost wrapper MUST have `padding: 0;`. Remove any padding on it.
 2. CRITICAL: DO NOT include instructional texts in parentheses (e.g. `(Draw a line)`).
 3. Ensure text inside boxes is vertically centered using `display: flex; align-items: center; justify-content: center;`.
-4. Ensure lines/blanks use explicit characters like `_________` instead of empty spans.
-5. CRITICAL: Short text labels (like 'SUN', 'MON', or 'Author:') MUST have `white-space: nowrap;` to prevent breaking mid-word.
-6. CRITICAL: If you use a grid/table structure where cells have right/bottom borders, ensure the wrapper container has `border-top` and `border-left` so the outer boundaries are not missing.
+4. CRITICAL: NEVER use literal underscores (`__________`) for blank spaces! Remove them entirely.
+5. CRITICAL: Ensure `overflow: hidden;` is applied to all boxes and cells so text doesn't spill out. DO NOT use `white-space: nowrap;` on large sections.
+6. CRITICAL: For row subdivisions, DO NOT hardcode pixel widths. Use `padding: 0 10px; white-space: nowrap;` for labels and `flex: 1;` for adjacent blank input areas.
+7. CRITICAL: If you use a grid/table structure where cells have right/bottom borders, ensure the wrapper container has `border-top` and `border-left` so the outer boundaries are not missing.
 {dynamic_rules}
 Generated HTML:
 ```html
