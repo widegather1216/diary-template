@@ -118,6 +118,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 아날로그 모드일 때 디자인 스타일 선택 비활성화
+    const designModeRadios = document.querySelectorAll('input[name="designMode"]');
+    const styleThemeSelect = document.getElementById('styleTheme');
+    
+    designModeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'guide') {
+                styleThemeSelect.disabled = true;
+                // 시각적으로도 비활성화됨을 표시하기 위해 부모에 클래스 추가 가능
+                styleThemeSelect.parentElement.style.opacity = '0.5';
+            } else {
+                styleThemeSelect.disabled = false;
+                styleThemeSelect.parentElement.style.opacity = '1';
+            }
+        });
+    });
+
     // 사용자가 페이지를 떠날 때 임시 PDF 삭제
     window.addEventListener('beforeunload', () => {
         if (currentFileId) {

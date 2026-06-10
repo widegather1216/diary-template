@@ -41,13 +41,13 @@ No extra explanations, just code.
     GUIDE_SYSTEM_PROMPT = f"""You are an expert Bullet Journal artist.
 The user wants a "Hand-drawing Blueprint" (a reference sketch) to copy manually.
 Requirements:
-1. DESIGN (CRITICAL): Create a hand-drawn look that reflects a '{style_theme}' theme. {style_detail} Use appropriate spacing and box structures.
+1. DESIGN (CRITICAL): Create a purely structural hand-drawn look. You MUST NOT use fancy decorations, cursive fonts, or double borders. Use only thin, single solid lines to represent grid spaces. Use the default 'Patrick Hand' font.
 2. CANVAS & GRID (CRITICAL): Your output is placed inside a container EXACTLY {cw}px wide and {ch}px tall. The system automatically draws a 20px dot grid background perfectly aligned with this container. Do NOT write `<body>` or `@page`. Write ONLY inner HTML and `<style>`. DO NOT set padding on the main container.
-2. UNIDIRECTIONAL BORDER FLEXBOX (CRITICAL): You MUST NOT use `<table>`, CSS Grid, or standard borders. To prevent double-thick 2px borders, you MUST use `display: flex` and the following strict border rules:
+3. UNIDIRECTIONAL BORDER FLEXBOX (CRITICAL): You MUST NOT use `<table>`, CSS Grid, or standard borders. To prevent double-thick 2px borders, you MUST use `display: flex` and the following strict border rules:
    - The outermost wrapper MUST have `border-top: 1px solid #333; border-left: 1px solid #333; box-sizing: border-box; width: 100%;`.
    - ALL inner boxes, rows, and cells MUST ONLY use `border-bottom: 1px solid #333; border-right: 1px solid #333; box-sizing: border-box;`.
    - NEVER use `border: 1px solid #333;` on anything. NEVER use `border-top` or `border-left` on inner children.
-3. PIXEL-PERFECT 20px MATH (CRITICAL): Every vertical container MUST have an EXACT height multiple of 20px (e.g., `height: 40px;`). NEVER use `%` or `flex: 1` for vertical spacing. Our post-processor snaps all px values to 20px, so you MUST provide explicit px heights.
+4. PIXEL-PERFECT 20px MATH (CRITICAL): Every vertical container MUST have an EXACT height multiple of 20px (e.g., `height: 40px;`). NEVER use `%` or `flex: 1` for vertical spacing. Our post-processor snaps all px values to 20px, so you MUST provide explicit px heights.
 4. LINED BACKGROUNDS: For empty note areas that need horizontal lines, DO NOT use CSS gradients. Instead, apply `class="lined-bg"` to the `<div>`. The system will automatically inject a perfect high-res SVG line pattern. Example: `<div class="lined-bg" style="height: 400px; border-bottom: 1px solid #333; border-right: 1px solid #333; box-sizing: border-box;"></div>`.
 5. LANGUAGE & CONTENT (CRITICAL): Even if the user inputs a title in Korean or another language, TRANSLATE it to English. ALL text labels, titles, and placeholders MUST BE IN ENGLISH. NEVER output instructional texts, hints, or placeholders in parentheses. Output ONLY the actual planner content.
 6. FONTS: The system has already loaded handwriting fonts. Do NOT use `@import`. Just set `font-family: 'Patrick Hand', cursive;` where needed.

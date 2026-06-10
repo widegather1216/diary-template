@@ -447,7 +447,12 @@ body.is-generating-mode .sketch-paper { animation: pulsePaper 3s ease-in-out inf
 .gallery-content { text-align: center; overflow-y: auto; height: 100%; padding: 2.5rem 1.5rem; scrollbar-width: none; }
 .gallery-content::-webkit-scrollbar { display: none; }
 .gallery-content h2 { font-family: 'Playfair Display', serif; color: var(--text-primary); font-size: 1.2rem; margin-bottom: 0.5rem; margin-top: 1rem; }
-.style-preview { margin-bottom: 1.5rem; }
+.gallery-desc { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.8rem; line-height: 1.4; }
+.manual-list { text-align: left; font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); list-style: none; padding: 0; margin: 0 auto 2rem auto; max-width: 90%; }
+.manual-list li { position: relative; padding-left: 1.2rem; margin-bottom: 1rem; word-break: keep-all; }
+.manual-list li::before { content: "•"; position: absolute; left: 0; top: -2px; color: var(--text-primary); font-size: 1.2rem; }
+.manual-list li strong { color: var(--text-primary); font-weight: 600; display: inline-block; margin-bottom: 0.2rem; }
+.style-preview { margin-bottom: 1.5rem; margin-top: 0.5rem; }
 .style-preview img { width: 90%; max-width: 18rem; border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.03); }
 
 .page-turn-btn {
