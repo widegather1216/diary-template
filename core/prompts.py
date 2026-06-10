@@ -27,12 +27,17 @@ Requirements:
 5. DYNAMIC REPEAT MACRO (CRITICAL): If you need to generate a long grid or repeating elements (e.g., 35 calendar cells, 31 habit boxes, 24 hours), DO NOT write them manually. 
    Use the custom `<repeat count="N">` tag. You MUST use sequence variables for sequential numbers/times: {{i}} (0,1,2...), {{i+1}} (1,2...), {{i+6:02d}} (06,07...).
    Example 1: `<repeat count="24"><div class="time">{{i:02d}}:00</div></repeat>`
-   Example 2: `<repeat count="35"><div class="cell"></div></repeat>`
+   Example 2 (Grid): `<repeat count="5"><div class="row"><repeat count="7"><div class="cell"></div></repeat></div></repeat>`
 6. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title. ONLY IF the user requests a calendar/planner:
    - DO NOT pre-fill any dates, numbers (e.g., 1, 2, 3), or placeholder years (e.g., 202X). Leave all calendar cells completely blank. Leave the year/month area as a blank underline (e.g., `Year: _________`).
    - Place the days of the week (SUN, MON... SAT) in a separate Flexbox row ABOVE the grid (`display: flex; width: 100%;`). For both these headers and the calendar cells, you MUST apply `flex: 1; min-width: 0; box-sizing: border-box;` so they perfectly divide the container into 7 equal columns regardless of text length.
    - You MUST use a 5-row by 7-column nested repeat structure for the main calendar grid, for example: `<repeat count="5"><div style="display: flex; width: 100%;"><repeat count="7"><div class="calendar-cell" style="flex: 1; min-width: 0; box-sizing: border-box; min-height: 80px;"></div></repeat></div></repeat>`.
-   For all other non-calendar formats, design freely.
+   ONLY IF the user requests a "Mandalart" or "만다라트":
+   - You MUST generate a 9x9 layout built as a 3x3 outer grid where each of the 9 outer cells contains an inner 3x3 grid.
+   - Use nested repeat macros for this (4 levels of `<repeat>` tags). Make the outer 3x3 borders thicker than the inner 3x3 borders.
+   For ALL general grid/table structures:
+   - You MUST apply `flex: 1; min-width: 0; box-sizing: border-box;` to the flex items (cells) to guarantee they shrink/grow evenly without overflowing or breaking the layout.
+   For all other non-calendar/non-grid formats, design freely.
 7. SPACE UTILIZATION (FILL {ch}px): You MUST visually fill the entire {ch}px height. For bottom note areas, use `flex-grow: 1;` and CSS `repeating-linear-gradient(white, white 19px, #e5e7eb 20px)` to fill the remaining space with lines. Apply `display: flex; flex-direction: column; min-height: 100%;` to the main wrapper.
 8. CONTENT PURITY (CRITICAL): NEVER output instructional texts, hints, or placeholders in parentheses (e.g., "(Draw a long line across)"). Output ONLY the actual planner content.
 9. NO JAVASCRIPT: Output ONLY pure, static HTML/CSS. If you use `<script>`, you fail.
@@ -55,10 +60,14 @@ Requirements:
 7. DYNAMIC REPEAT MACRO (CRITICAL): If you need to generate a long grid or repeating elements, DO NOT write them manually. 
    Use the custom `<repeat count="N">` tag. You MUST use sequence variables for sequential numbers/times: {{i}} (0,1,2...), {{i+1}} (1,2...), {{i+6:02d}} (06,07...).
    Example: `<repeat count="10"><div style="height: 20px; border-bottom: 1px solid #333; border-right: 1px solid #333; box-sizing: border-box;"></div></repeat>`
-8. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title. ONLY IF it is a calendar/planner:
+8. ADAPTIVE LAYOUT (CRITICAL): Adapt the layout perfectly to the requested Title.
+   - For ANY grid structure (calendar, table, etc), you MUST apply `flex: 1; min-width: 0; box-sizing: border-box;` to the grid cells so they divide space perfectly without overflowing.
+   ONLY IF it is a calendar/planner:
    - DO NOT pre-fill any dates, numbers, or placeholder years. Leave all calendar cells completely blank. For Year/Month, just provide empty labeled boxes.
    - Use `<repeat count="5"><div style="display: flex; width: 100%;"><repeat count="7"><div style="height: 100px; flex: 1; min-width: 0; border-bottom: 1px solid #333; border-right: 1px solid #333; box-sizing: border-box; overflow: hidden;"></div></repeat></div></repeat>` for the calendar grid.
    - For the day headers (SUN, MON... SAT), you MUST also use `flex: 1; min-width: 0;` so they align perfectly with the grid below.
+   ONLY IF the user requests a "Mandalart" or "만다라트":
+   - Generate a 3x3 grid where each of the 9 cells contains an inner 3x3 grid. Use nested `<repeat count="3">` macros (4 levels deep). Ensure all cells follow the strict border rules (only bottom/right borders on inner elements, top/left on main wrapper).
 9. TEXT HANDLING (CRITICAL): To prevent text from escaping its box and ruining the layout:
    - NEVER use literal underscores (`__________`) for blanks! The `border-bottom` of your boxes already acts as a writing line. Use empty space instead.
    - ALWAYS apply `overflow: hidden;` to all your cells and boxes.
