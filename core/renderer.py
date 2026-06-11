@@ -107,9 +107,9 @@ def snap_css_to_grid(content):
         return f"{prop_name}:{snapped_values}{semicolon}"
         
     return re.sub(prop_pattern, prop_replacer, content, flags=re.IGNORECASE)
-def assemble_master_html(llm_output, design_mode, page_size, orientation='portrait'):
+def assemble_master_html(llm_output, design_mode, page_size, orientation='portrait', style_theme='Minimal'):
     """
-    Cleans up the LLM-generated HTML and wraps it inside the strict page-container.
+    Cleans up the LLM-generated HTML, applies aesthetics, and wraps it in the page container.
     """
     config = get_page_config(page_size, orientation)
     cw, ch = config['cw'], config['ch']
@@ -129,6 +129,16 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
     llm_body = re.sub(r'```\s*$', '', llm_body, flags=re.MULTILINE).strip()
     
     llm_body = process_repeat_macros(llm_body)
+    
+    # Safe Aesthetic Color Injection (Replaces raw #333 borders with theme colors)
+    if design_mode != 'guide':
+        if style_theme == 'Fancy':
+            llm_body = llm_body.replace('#333', '#8fa1b3') # Muted pastel blue
+            llm_body = llm_body.replace('border-radius: 0', 'border-radius: 8px') # Soften borders
+        elif style_theme == 'Antique':
+            llm_body = llm_body.replace('#333', '#5c4033') # Vintage dark brown
+        elif style_theme == 'Minimal':
+            llm_body = llm_body.replace('#333', '#2c3e50') # Charcoal gray
     
     if design_mode == 'guide':
         llm_style = snap_css_to_grid(llm_style)
@@ -161,10 +171,25 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
     
     css_page_size = f"{page_size} landscape" if orientation == "landscape" else page_size
     
+    # Typography & Theme CSS Injection
+    google_fonts = ""
+    theme_css = ""
+    if design_mode != 'guide':
+        if style_theme == 'Fancy':
+            google_fonts = '<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">'
+            theme_css = "body { font-family: 'Quicksand', sans-serif; color: #4a4a4a; } h1, h2, h3, .title { font-family: 'Pacifico', cursive; color: #7a8b99; }"
+        elif style_theme == 'Antique':
+            google_fonts = '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">'
+            theme_css = "body { font-family: 'Cormorant Garamond', serif; color: #3b2f2f; background-color: #fcfaf5 !important; } h1, h2, h3, .title { font-family: 'Playfair Display', serif; }"
+        else: # Minimal
+            google_fonts = '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">'
+            theme_css = "body { font-family: 'Inter', sans-serif; color: #1a1a1a; }"
+    
     master_html = f"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
+{google_fonts}
 <style>
 @page {{ size: {css_page_size}; margin: 0; }}
 * {{ box-sizing: border-box; margin: 0; padding: 0; background-color: transparent; }}
@@ -190,6 +215,7 @@ body {{
     overflow: hidden !important;
 }}
 
+{theme_css}
 {lined_bg_css}
 {llm_style}
 </style>

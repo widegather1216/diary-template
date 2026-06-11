@@ -13,6 +13,7 @@ def get_system_prompts(cw, ch, style_theme='Minimal'):
 The user wants a highly professional planner/diary layout for printing.
 Requirements:
 1. DESIGN (CRITICAL): Premium layout with a '{style_theme}' visual theme. {style_detail} Adjust typography, borders, shading, and spacing to strongly reflect this style. Avoid amateur designs.
+   - For the main Title, ALWAYS use an `<h1>` tag or `<div class="title">`. For subtitles, use `<h2>`. This ensures our system can inject premium web fonts correctly.
 2. LANGUAGE & CONTENT (CRITICAL): Even if the user inputs a title in Korean or another language, TRANSLATE it to English. ALL text labels, titles, and placeholders MUST BE IN ENGLISH. NEVER output instructional texts, hints, or placeholders in parentheses (e.g., "(Draw a long line across)"). Output ONLY the actual planner content.
 3. CANVAS CONSTRAINTS (CRITICAL): Your output will be placed inside a container EXACTLY {cw}px wide and {ch}px tall. Do NOT write `<html>`, `<body>`, or `@page`. Write ONLY the inner HTML elements and `<style>`. NEVER use padding on the outermost container (`padding: 0;`), otherwise the calendar grid will overflow and be cut off. Let inner elements stretch to `{cw}px`.
 4. STRUCTURE & SAFETIES (CRITICAL):

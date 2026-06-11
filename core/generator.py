@@ -72,6 +72,6 @@ Return ONLY the corrected HTML/CSS. No explanations.
         html_content = review_response.text
     except ValueError:
         pass # Fallback to first pass output if blocked
-    
-    master_html = assemble_master_html(html_content, design_mode, page_size, orientation)
+        
+    master_html = assemble_master_html(html_content, design_mode, page_size, orientation, style_theme)
     return master_html
