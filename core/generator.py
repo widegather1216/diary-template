@@ -91,6 +91,10 @@ Review the generated HTML below and fix any violations of the design rules:
 7a. CRITICAL: Do NOT remove the right or bottom borders of the cells on the edges (do NOT use `:nth-child` to set `border-right: none` or `border-bottom: none`). The cells' right/bottom borders must remain to form the right/bottom outer edges of the grid, ensuring the entire grid border is completely closed.
 7b. CRITICAL: For Weekly Planners or Calendars, do NOT use generic placeholders like 'DAY 1', 'DAY 2', or 'Day {{i+1}}'. Write the actual day names (e.g. 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN') manually.
 7c. CRITICAL: Ensure the top-right corner of the outer border is completely closed. If the Title is borderless, place it OUTSIDE the bordered grid container. Do not apply border-top/left to a container that includes a borderless title and leaves the top-right side open.
+7d. CRITICAL: For Mandalart, explicitly style sub-cells with a thin, lighter border (e.g. border-right and border-bottom) and NEVER remove or hide borders on any edge sub-cells using :last-child or :nth-child resets. Keep all inner sub-cell borders visible.
+7e. CRITICAL: For Calendars, do NOT write hardcoded date numbers (1, 2, 3...) inside the grid cells unless explicitly requested. Leave date cells completely blank.
+7f. CRITICAL: Do NOT write code expressions like `split(",")` or array indexing in HTML text content (e.g. `MON,TUE...split(",")[0]` is strictly forbidden). HTML text must be plain text. If you need distinct text values for repeating blocks (like day names), write each block manually without using the `<repeat>` macro.
+7g. CRITICAL: For Daily Planners, do NOT hardcode absolute pixel heights on timetable slots (e.g. do NOT use height: 40px; on slots). Slots must use flex: 1; so they stretch and fill the timetable column, ensuring the bottom of the timetable is closed with the last slot's bottom border.
 8. CRITICAL: Replace `white-space: nowrap;` on the main Title with `word-break: keep-all; overflow-wrap: normal;` so words wrap at spaces but do not break in the middle of a word.
 {dynamic_rules}
 Generated HTML:
