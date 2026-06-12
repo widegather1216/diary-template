@@ -16,11 +16,11 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
     """
     client = get_gemini_client()
     config = get_page_config(page_size, orientation)
-    SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts()
+    SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(title=title, description=description)
     
     style_instructions = {
         'Minimal': "Use sans-serif fonts (e.g., 'Inter', 'Helvetica'), thin 1px borders, abundant whitespace, and completely remove any unnecessary decorations or shading. Keep it clean and modern.",
-        'Cute': "Use bubbly or hand-drawn fonts (e.g., 'Quicksand', 'Patrick Hand'), rounded borders (e.g., `border-radius: 12px`), dotted/dashed lines, and soft aesthetics. It should look friendly, cozy, and cute like a journaling notebook.",
+        'Cute': "Use bubbly or hand-drawn fonts (e.g., 'Quicksand', 'Architects Daughter'), rounded borders (e.g., `border-radius: 12px`), dotted/dashed lines, and soft aesthetics. It should look friendly, cozy, and cute like a journaling notebook.",
         'Editorial': "Use elegant serif fonts (e.g., 'Playfair Display', 'Times New Roman'), alternating thick and thin lines for borders, high contrast typography, and magazine-style sophisticated layouts."
     }
     style_detail = style_instructions.get(style_theme, style_instructions['Minimal'])
@@ -80,7 +80,14 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
     dynamic_rules += "\n9. CRITICAL: For bottom note areas, DO NOT use CSS gradients. MUST apply `class=\"lined-bg\"` to a `<div>` to render the SVG lined background."
         
     review_prompt = f"""
-Review the generated HTML below and fix any violations of the design rules:
+Review the generated HTML below and fix any violations of the design rules.
+CRITICAL: You MUST also preserve and correctly apply the user's original request parameters and custom requests. Do NOT remove or revert any custom layout/style changes requested by the user.
+
+[USER'S ORIGINAL REQUEST]
+- Title: {title}
+- Custom Requests / Description: {description}
+
+[DESIGN RULES]
 1. CRITICAL: The outermost wrapper MUST have `padding: 0;`. Remove any padding on it.
 2. CRITICAL: DO NOT include instructional texts in parentheses (e.g. `(Draw a line)`).
 3. Ensure text inside boxes is vertically centered using `display: flex; align-items: center; justify-content: center;`.

@@ -36,8 +36,8 @@ def process_repeat_macros(html_content):
                     except:
                         return match.group(0)
             
-            # Match {i}, {i+1}, {i:02d}, {i+6:02d}
-            text = re.sub(r'\{(i[^}]*)\}', eval_expr, text)
+            # Match {i}, {i+1}, {8+i}, {i:02d}, {i+6:02d}, {8+i:02d}
+            text = re.sub(r'\{([^}]*i[^}]*)\}', eval_expr, text)
             result.append(text)
         return "".join(result)
 

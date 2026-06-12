@@ -63,7 +63,7 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
     llm_body = process_repeat_macros(llm_body)
     
     # Inject themes/styles
-    llm_body, google_fonts, theme_css = apply_theme_aesthetics(llm_body, style_theme, design_mode)
+    llm_body, llm_style, google_fonts, theme_css = apply_theme_aesthetics(llm_body, llm_style, style_theme, design_mode)
     
     if design_mode == 'guide':
         llm_style = snap_css_to_grid(llm_style)

@@ -21,20 +21,22 @@ THEME_CONFIG = {
     }
 }
 
-def apply_theme_aesthetics(html_body, style_theme, design_mode):
+def apply_theme_aesthetics(html_body, html_style, style_theme, design_mode):
     """
-    Applies theme-specific fonts, body styling, and border color replacements to the generated HTML.
+    Applies theme-specific fonts, body styling, and border color replacements to the generated HTML and CSS.
     If the design mode is 'guide', it bypasses decorative aesthetics to maintain blueprint purity.
     """
     if design_mode == 'guide':
-        return html_body, "", ""
+        return html_body, html_style, "", ""
         
     theme = THEME_CONFIG.get(style_theme, THEME_CONFIG['Minimal'])
     border_color = theme['border_color']
     
     # Replaces raw #333 borders with theme colors
     html_body = html_body.replace('#333', border_color)
+    html_style = html_style.replace('#333', border_color)
     if theme.get('soften_borders'):
         html_body = html_body.replace('border-radius: 0', 'border-radius: 12px')
+        html_style = html_style.replace('border-radius: 0', 'border-radius: 12px')
         
-    return html_body, theme['fonts'], theme['css']
+    return html_body, html_style, theme['fonts'], theme['css']
