@@ -54,15 +54,23 @@ flowchart TD
   - `/api/download-pdf/<file_id>`: 로컬에 임시 생성된 PDF 파일을 클라이언트에게 첨부(attachment) 방식으로 내려줍니다.
   - `/api/cleanup-pdf`: 서버 디스크 공간 절약을 위해 클라이언트가 이탈하거나 명시적으로 파일 파기 요청 시 즉각 PDF를 삭제합니다.
 
-### 2.2. 생성 엔진 (`core/generator.py` & `core/prompts.py` & `core/model_config.py`)
+#### 2.2. 생성 엔진 (`core/generator.py` & `core/prompts/` 패키지 & `core/model_config.py`)
 
 Gemini AI 모델이 단순히 "웹 페이지"를 만드는 것이 아니라 "출력용 픽셀 퍼펙트 문서"를 만들도록 하기 위해 특수한 프롬프트 엔지니어링과 **2-Pass (Self-Reflection) 기법**을 적용합니다.
 
 1. **`core/model_config.py`**:
    - 공식 지원되는 최신 **`google-genai` SDK**를 사용해 Gemini 클라이언트를 안전하게 초기화합니다.
-2. **`core/generator.py` (2-Pass 자가 교정)**:
-   - **Pass 1 (초안 생성)**: `prompts.py`에 정의된 모드별 시스템 프롬프트를 바탕으로 AI 모델을 통해 HTML/CSS 초안을 생성합니다. 스키마 매핑을 위해 Pydantic 모델을 사용합니다.
-   - **Pass 2 (규칙 검증 및 자가 교정)**: LLM이 종종 디자인 제약을 무시하는 문제를 해결하기 위해, Pass 1에서 얻은 HTML/CSS를 다시 LLM에게 넘겨 2중 테두리(Double Border) 배제, 외곽 패딩 제거 등의 규칙 준수 여부를 검증하고 최종 보정본을 얻습니다.
+2. **`core/prompts/` 패키지**:
+   - 기존의 비대한 단일 프롬프트 파일을 구조적이고 관리하기 쉬운 기능별 파일로 분리하여 패키지화했습니다.
+   - **`layout_hints.py`**: 27개 이상의 다채로운 플래너 양식(만다라트, 먼슬리 등)의 핵심 가이드 텍스트와 검색 키워드 사전(`LAYOUT_HINTS`)을 정의합니다.
+   - **`base_templates.py`**: 기본 및 핸드 드로잉 가이드 모드의 `SYSTEM_PROMPT` 뼈대를 관리하며, 템플릿 포맷팅 시 혼선을 주지 않도록 매크로용 중괄호를 `{{i}}`로 안전하게 이스케이프 처리했습니다.
+   - **`review_templates.py`**: 2차 자가검증에 쓰일 엄격한 테두리 및 레이아웃 관련 디자인 룰(`REVIEW_PROMPT_TEMPLATE`)을 관리합니다.
+   - **`__init__.py`**: 모듈 간 결합을 총괄하고 외부 진입점인 `get_system_prompts()`와 `get_review_prompt()` 함수를 제공합니다.
+3. **`core/generator.py` (2-Pass 자가 교정 및 제어 흐름 분할)**:
+   - 복잡했던 LLM 호출 및 검증 흐름을 독립된 서브 함수로 세분화했습니다.
+   - **`_request_initial_layout(...)`** (초안 생성): `base_templates`를 참조하여 API를 호출하고 HTML/CSS 초안을 생성 및 안전성/유사성 필터 예외 처리를 수행합니다.
+   - **`_request_self_reflection(...)`** (자가 검증): 1차 초안을 디자인 규칙(`review_templates`)과 동적 보정 룰을 입혀 Gemini에 재전송함으로써, 레이아웃의 완성도를 높이고 버그가 없는 최종 수정본을 확보합니다.
+   - **`generate_layout_html(...)`**: 위 단계적 함수들을 체이닝하여 전체적인 초안 생성부터 자가 검증, 마스터 HTML 결합까지의 생성 라이프사이클을 조율합니다.
 
 ### 2.3. 매크로 및 테마 렌더링 엔진 (`core/renderer.py` & `core/themes.py` & `core/macros.py`)
 
