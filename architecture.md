@@ -6,7 +6,7 @@
 
 ## 1. 시스템 다이어그램
 
-이 시스템은 클라이언트의 요청이 Flask 백엔드를 거쳐 Gemini AI 모델로 전달되고, 생성된 결과물이 자체 렌더링 엔진(매크로/스냅 보정)을 거쳐 최종 PDF로 변환되는 선형적인 파이프라인을 가집니다.
+이 시스템은 클라이언트의 요청이 Flask 백엔드를 거쳐 Gemini AI 모델로 전달되고, 생성된 결과물이 자체 렌더링 엔진(매크로/테마/스냅 보정)을 거쳐 최종 PDF로 변환되는 선형적인 파이프라인을 가집니다.
 
 ```mermaid
 flowchart TD
@@ -15,6 +15,8 @@ flowchart TD
     Gen[Generator Engine / core/generator.py]
     Gemini[Google Gemini AI]
     Renderer[Renderer / core/renderer.py]
+    Themes[Themes / core/themes.py]
+    Macros[Macros / core/macros.py]
     PDFMgr[PDF Manager / core/pdf_manager.py]
     WeasyPrint[WeasyPrint PDF Engine]
     
@@ -27,7 +29,8 @@ flowchart TD
     Gemini -- "Corrected HTML/CSS" --> Gen
     
     Gen -- "Parsed HTML/CSS" --> Renderer
-    Renderer -- "1. process_repeat_macros()\n2. snap_css_to_grid()\n3. assemble_master_html()" --> Renderer
+    Renderer -- "1. apply_theme_aesthetics()" --> Themes
+    Renderer -- "2. process_repeat_macros()\n3. snap_css_to_grid()" --> Macros
     Renderer -- "Master HTML" --> PDFMgr
     
     PDFMgr -- "HTML String" --> WeasyPrint
@@ -45,43 +48,33 @@ flowchart TD
 
 ### 2.1. 프론트엔드 및 진입점 (`static/`, `templates/`, `app.py`)
 
-- **`templates/index.html` & `static/script.js`**: 단일 페이지 애플리케이션(SPA) 형태로 사용자가 플래너의 종류(일간, 주간, 월간, 습관 트래커 등), 용지 크기(A4, A5, B5), 디자인 모드(Print/Guide)를 선택합니다.
+- **`templates/index.html` & `static/script.js`**: 단일 페이지 애플리케이션(SPA) 형태로 사용자가 플래너의 종류, 용지 크기(A4, A5, B5), 디자인 모드(Print/Guide)를 선택합니다.
 - **`app.py`**: Flask 앱의 진입점으로 핵심 REST API를 정의합니다.
   - `/api/generate-pdf`: 폼 데이터를 JSON으로 받아 파이프라인(`generate_layout_html` -> `generate_pdf`)을 실행.
   - `/api/download-pdf/<file_id>`: 로컬에 임시 생성된 PDF 파일을 클라이언트에게 첨부(attachment) 방식으로 내려줍니다.
   - `/api/cleanup-pdf`: 서버 디스크 공간 절약을 위해 클라이언트가 이탈하거나 명시적으로 파일 파기 요청 시 즉각 PDF를 삭제합니다.
 
-### 2.2. 생성 엔진 (`core/generator.py` & `core/prompts.py`)
+### 2.2. 생성 엔진 (`core/generator.py` & `core/prompts.py` & `core/model_config.py`)
 
 Gemini AI 모델이 단순히 "웹 페이지"를 만드는 것이 아니라 "출력용 픽셀 퍼펙트 문서"를 만들도록 하기 위해 특수한 프롬프트 엔지니어링과 **2-Pass (Self-Reflection) 기법**을 적용합니다.
 
-1. **Pass 1 (초안 생성)**:
-   - `prompts.py`에 정의된 모드별(일반/가이드) 시스템 프롬프트를 주입합니다.
-   - 캔버스 너비/높이(`cw`, `ch` 변수)를 동적으로 주입하여 컨테이너 밖으로 내용이 벗어나지 않도록 강제합니다.
-   - `<table>` 대신 `Flexbox` 사용, 영어 번역 강제, 불필요한 설명 텍스트 배제 등의 엄격한 제약 조건을 전달합니다.
+1. **`core/model_config.py`**:
+   - 공식 지원되는 최신 **`google-genai` SDK**를 사용해 Gemini 클라이언트를 안전하게 초기화합니다.
+2. **`core/generator.py` (2-Pass 자가 교정)**:
+   - **Pass 1 (초안 생성)**: `prompts.py`에 정의된 모드별 시스템 프롬프트를 바탕으로 AI 모델을 통해 HTML/CSS 초안을 생성합니다. 스키마 매핑을 위해 Pydantic 모델을 사용합니다.
+   - **Pass 2 (규칙 검증 및 자가 교정)**: LLM이 종종 디자인 제약을 무시하는 문제를 해결하기 위해, Pass 1에서 얻은 HTML/CSS를 다시 LLM에게 넘겨 2중 테두리(Double Border) 배제, 외곽 패딩 제거 등의 규칙 준수 여부를 검증하고 최종 보정본을 얻습니다.
 
-2. **Pass 2 (규칙 검증 및 자가 교정)**:
-   - LLM이 종종 디자인 제약을 무시하는 문제를 해결하기 위해, Pass 1에서 얻은 HTML/CSS를 다시 LLM에게 넘겨 오류를 검사하도록 지시합니다.
-   - 예시 규칙: "바깥쪽 래퍼에 패딩이 있으면 제거할 것", "테두리 중복을 막기 위해 모든 내부 박스는 `border-bottom`, `border-right`만 사용할 것"
-   - 이 과정을 통해 레이아웃이 깨질 확률을 극적으로 낮춥니다.
+### 2.3. 매크로 및 테마 렌더링 엔진 (`core/renderer.py` & `core/themes.py` & `core/macros.py`)
 
-### 2.3. 매크로 및 렌더링 엔진 (`core/renderer.py`)
+단일 호출 안에서 LLM이 너무 많은 코드를 짜면 속도가 느려지거나 중간에 생성이 끊깁니다. 이를 해결하기 위해 백엔드에 자체적인 매크로 분기 및 후처리기를 완벽히 분할(Decoupling)하여 구성했습니다.
 
-단일 호출 안에서 LLM이 너무 많은 코드를 짜면 속도가 느려지거나 중간에 생성이 끊깁니다. 이를 해결하기 위해 자체적인 매크로 문법과 CSS 후처리기를 구현했습니다.
-
-* **반복 매크로 처리 (`process_repeat_macros`)**:
-  - AI는 `31일 달력 칸`을 일일이 타이핑하지 않고 `<repeat count="31">...{i+1}...</repeat>` 형태로 작성합니다.
-  - 이 모듈 내부의 정규 표현식 파서가 `count`만큼 내부 태그를 복제하고, `{i}`, `{i+1}`, `{i+6:02d}` 와 같은 인덱스 변수들을 실제 숫자(예: 0, 1, 06)로 치환합니다.
-
-* **동적 캔버스 계산 (`get_page_config`)**:
-  - A4, A5 등 용지 스펙에 맞춰 `weasyprint`에서 렌더링될 때 딱 들어맞는 픽셀(px) 너비/높이, 그리고 여백 보정 값을 계산합니다.
-
-* **가이드 모드 그리드 스내핑 (`snap_css_to_grid`)**:
-  - "손글씨 불렛 저널 모드"에서는 종이에 20px 단위의 점(Dot) 그리드가 배경에 깔립니다.
-  - AI가 생성한 CSS의 모든 세로 속성(height, padding, margin, gap 등)의 픽셀 값을 정규식으로 추출해, 강제로 **20의 배수(20px, 40px, 60px...)**로 반올림하여 스냅(Snap)시킵니다. 이를 통해 실제 종이에 인쇄했을 때 컨텐츠가 도트 그리드 라인과 오차 없이 완벽하게 일치하게 됩니다.
-
-* **마스터 HTML 조립 (`assemble_master_html`)**:
-  - AI가 던져준 원시 HTML, 조립된 CSS, 매크로가 해제된 Body 요소, 그리고 동적으로 생성된 배경(Dot Grid 또는 Lined SVG) 코드를 하나의 최종 `<!DOCTYPE html>` 템플릿에 안전하게 묶어냅니다.
+* **`core/themes.py` (테마 스타일 처리)**:
+  - `Cute`, `Editorial`, `Minimal` 각 디자인 컨셉에 맞춰 폰트 링크 인젝션, 테마 CSS 정의, 테두리(Border) 색상 변경 및 border-radius 적용을 처리합니다.
+* **`core/macros.py` (반복 매크로 및 그리드 스냅)**:
+  - **반복 매크로 (`process_repeat_macros`)**: AI가 대량의 행/열을 일일이 타이핑하지 않고 `<repeat count="N">` 형태로 출력한 태그를 감지하여, {i} 등 시퀀스 변수를 숫자로 치환하고 반복 팽창시킵니다.
+  - **그리드 스냅 (`snap_css_to_grid`)**: 가이드 도안 모드에서 20px 도트 그리드 배경에 컨텐츠 라인들이 정확히 정렬되도록 CSS의 모든 높이/여백(px) 단위를 강제로 20의 배수로 반올림하여 정렬(Snapping)합니다.
+* **`core/renderer.py` (조립 및 레이아웃)**:
+  - 용지 크기 연산(`get_page_config`)과 분할된 모듈들을 사용해 최종 Master HTML 문서를 완성합니다.
 
 ### 2.4. PDF 매니저 및 가비지 컬렉터 (`core/pdf_manager.py`)
 
@@ -90,13 +83,20 @@ Gemini AI 모델이 단순히 "웹 페이지"를 만드는 것이 아니라 "출
   - 새로운 PDF 생성을 요청할 때마다 디렉토리를 검사하여 **수정된 지 1시간이 넘은 찌꺼기 PDF 파일**을 자동으로 삭제(`os.remove`)합니다.
   - 이는 사용자가 페이지를 강제로 종료하여 프론트엔드의 `/api/cleanup-pdf` 이탈 이벤트가 트리거되지 못했을 경우 발생하는 디스크 용량 누수(Disk Leak)를 방지하는 중요한 방어 로직입니다.
 
+### 2.5. 테스트 디렉토리 구조 (`tests/`)
+- 루트에 흩어져 있던 테스트 도구들을 `/tests/` 디렉토리로 모아 프로젝트 정렬 상태를 정돈하였습니다.
+- `test_macro.py`: 반복 매크로의 동작성 검증.
+- `test_generation.py`, `test_ledger.py`, `test_all.py`: 용지 크기 및 모드별 다이어리 템플릿 대량 자동 생성.
+- `test_pdf.py`: WeasyPrint를 사용한 PDF 로컬 빌드 및 인쇄 상태 검증.
+- 모든 출력 결과는 `tests/output/` 경로 아래 독립적으로 축적됩니다.
+
 ---
 
 ## 3. 핵심 디자인 철학
 
 1. **AI의 한계는 백엔드 전처리/후처리로 극복한다.**
    AI에게 "30칸을 그려라"라고 지시하기보다 "1칸을 그리고 반복 태그를 써라"라고 지시한 뒤 백엔드에서 30칸을 복제하는 것이 훨씬 신뢰성이 높습니다.
-2. **환각(Hallucination) 방어용 2차 검증**
-   LLM이 종종 디자인 가이드(특히 CSS 테두리나 패딩)를 위반하는 현상을 막기 위해, 코드를 다시 리뷰하라는 2차 프롬프트를 던져 안정성을 대폭 향상시켰습니다.
+2. **관심사 분리 (Separation of Concerns)**
+   테마 설정, 반복 매크로 파싱, 마스터 조립 로직을 모듈 단위로 완전히 쪼개어 코드 복잡도를 낮추고 유지보수성과 확장성을 극대화했습니다.
 3. **Stateless 구조 유지**
    플래너 PDF는 임시 데이터입니다. 데이터베이스(DB)를 전혀 사용하지 않으며, PDF는 생성 후 일회성으로 다운로드되고 즉시 파기되도록 설계하여 인프라 유지 비용을 최소화했습니다.
