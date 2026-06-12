@@ -20,6 +20,7 @@ CRITICAL: You MUST also preserve and correctly apply the user's original request
 7e. CRITICAL: For Calendars, do NOT write hardcoded date numbers (1, 2, 3...) inside the grid cells unless explicitly requested. Leave date cells completely blank.
 7f. CRITICAL: Do NOT write code expressions like `split(",")` or array indexing in HTML text content (e.g. `MON,TUE...split(",")[0]` is strictly forbidden). HTML text must be plain text. If you need distinct text values for repeating blocks (like day names), write each block manually without using the `<repeat>` macro.
 7g. CRITICAL: For Daily Planners, do NOT hardcode absolute pixel heights on timetable slots (e.g. do NOT use height: 40px; on slots). Slots must use flex: 1; so they stretch and fill the timetable column, ensuring the bottom of the timetable is closed with the last slot's bottom border.
+7h. CRITICAL: Ensure the Notes/Memo area (`.lined-bg`) is never left open at the top. If the block above it has no bottom border, or if there is margin between them, the Notes block MUST have its own top border or the parent wrapper must close it.
 8. CRITICAL: Replace `white-space: nowrap;` on the main Title with `word-break: keep-all; overflow-wrap: normal;` so words wrap at spaces but do not break in the middle of a word.
 {dynamic_rules}
 Generated HTML:
