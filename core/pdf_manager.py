@@ -1,7 +1,17 @@
 import os
+import sys
 import time
 import uuid
 import tempfile
+
+if sys.platform == "darwin":
+    brew_lib_path = "/opt/homebrew/lib"
+    if os.path.exists(brew_lib_path):
+        dyld_path = os.environ.get("DYLD_FALLBACK_LIBRARY_PATH", "")
+        if brew_lib_path not in dyld_path:
+            os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = f"{brew_lib_path}:{dyld_path}".strip(":")
+            os.execve(sys.executable, [sys.executable] + sys.argv, os.environ)
+
 from weasyprint import HTML
 
 TEMP_PDF_DIR = os.path.join(tempfile.gettempdir(), 'formweaver_pdfs')

@@ -45,7 +45,7 @@ def process_repeat_macros(html_content):
     {i:02d} -> 00, 01, 02...
     {i+6:02d} -> 06, 07, 08...
     """
-    pattern = re.compile(r'<repeat\s+count="(\d+)">((?:(?!<repeat).)*?)</repeat>', re.IGNORECASE | re.DOTALL)
+    pattern = re.compile(r'<repeat\s+count=["\'&quot;]?(\d+)["\'&quot;]?\s*>((?:(?!<repeat).)*?)</repeat>', re.IGNORECASE | re.DOTALL)
     
     def replacer(m):
         count = int(m.group(1))
@@ -132,11 +132,11 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
     
     # Safe Aesthetic Color Injection (Replaces raw #333 borders with theme colors)
     if design_mode != 'guide':
-        if style_theme == 'Fancy':
+        if style_theme == 'Cute':
             llm_body = llm_body.replace('#333', '#8fa1b3') # Muted pastel blue
-            llm_body = llm_body.replace('border-radius: 0', 'border-radius: 8px') # Soften borders
-        elif style_theme == 'Antique':
-            llm_body = llm_body.replace('#333', '#5c4033') # Vintage dark brown
+            llm_body = llm_body.replace('border-radius: 0', 'border-radius: 12px') # Soften borders
+        elif style_theme == 'Editorial':
+            llm_body = llm_body.replace('#333', '#2b2b2b') # Very dark grey for editorial
         elif style_theme == 'Minimal':
             llm_body = llm_body.replace('#333', '#2c3e50') # Charcoal gray
     
@@ -145,29 +145,34 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
         llm_body = snap_css_to_grid(llm_body)
     
     dot_css = ""
-    lined_bg_css = ""
+    import urllib.parse
+    
+    line_color = '#333' if design_mode == 'guide' else '#e5e7eb'
+    lined_svg = f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><rect x='0' y='19' width='20' height='1' fill='{line_color}'/></svg>"
+    lined_svg_encoded = urllib.parse.quote(lined_svg)
+    lined_bg_css = f"""
+.lined-bg {{
+    background-image: url("data:image/svg+xml,{lined_svg_encoded}") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}}
+"""
+    
     if design_mode == 'guide':
         bg_x = (config['W'] - cw) / 2
         bg_y = top_pos
         # Crisp 1x1 dot at (0,0) to prevent WeasyPrint antialiasing blur
         dot_svg = "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><rect x='0' y='0' width='1' height='1' fill='#b0b0b0'/></svg>"
-        import urllib.parse
         dot_svg_encoded = urllib.parse.quote(dot_svg)
         dot_css = f"""
     background-image: url("data:image/svg+xml,{dot_svg_encoded}") !important;
     background-position: {bg_x}px {bg_y}px !important;
         """
-        lined_svg = "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><rect x='0' y='19' width='20' height='1' fill='#333'/></svg>"
-        lined_svg_encoded = urllib.parse.quote(lined_svg)
-        lined_bg_css = f"""
-.lined-bg {{
-    background-image: url("data:image/svg+xml,{lined_svg_encoded}") !important;
-    background-position: top !important;
-}}
-.page-container * {{
+        lined_bg_css += """
+.page-container * {
     background-color: transparent !important;
-}}
-        """
+}
+"""
     
     css_page_size = f"{page_size} landscape" if orientation == "landscape" else page_size
     
@@ -175,12 +180,12 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
     google_fonts = ""
     theme_css = ""
     if design_mode != 'guide':
-        if style_theme == 'Fancy':
+        if style_theme == 'Cute':
             google_fonts = '<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">'
             theme_css = "body { font-family: 'Quicksand', sans-serif; color: #4a4a4a; } h1, h2, h3, .title { font-family: 'Pacifico', cursive; color: #7a8b99; }"
-        elif style_theme == 'Antique':
+        elif style_theme == 'Editorial':
             google_fonts = '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">'
-            theme_css = "body { font-family: 'Cormorant Garamond', serif; color: #3b2f2f; background-color: #fcfaf5 !important; } h1, h2, h3, .title { font-family: 'Playfair Display', serif; }"
+            theme_css = "body { font-family: 'Cormorant Garamond', serif; color: #2b2b2b; background-color: #fdfdfd !important; } h1, h2, h3, .title { font-family: 'Playfair Display', serif; text-transform: uppercase; letter-spacing: 1px; }"
         else: # Minimal
             google_fonts = '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">'
             theme_css = "body { font-family: 'Inter', sans-serif; color: #1a1a1a; }"
