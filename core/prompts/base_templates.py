@@ -22,6 +22,7 @@ Requirements:
 6. ADAPTIVE LAYOUT (CRITICAL): Adapt to Title/Description. Description takes precedence over reference skeletons. Grids: leave date cells blank.
    - Even grid: cells get flex: 1, min-width: 0, box-sizing: border-box.
    - Uneven grid (Ledger): header & data rows must use matching flex values or % widths.
+   - Grid Header Sizing Safety: If a grid or table has a fixed-height header row (e.g. days of the week) and stretchable data rows below it styled with `flex: 1`, you MUST style the header row explicitly with `flex: none; height: XXpx;` (or `flex: 0 0 XXpx;`) and give it a distinct class (e.g. `class="row header-row"`) to prevent it from inheriting the generic `flex: 1` of standard rows, which causes broken layout gaps.
 7. SPACE UTILIZATION: Fill designated canvas height. Default Notes area: flex-grow: 1, min-height: 100px, class="lined-bg". Main wrapper: display: flex; flex-direction: column; height: 100%.
 8. COMMON LAYOUT HINTS (CRITICAL STRUCTURES):
 {layout_hints_str}
@@ -32,10 +33,19 @@ Requirements:
     - Typography Hierarchy: Set a clear size/weight contrast between main titles (large, heavy weight) and secondary labels (small, lighter weight).
     - Decorative details: Utilize fine dotted (`1px dotted #ccc`) or dashed borders for auxiliary grid lines or checkboxes. For Cute style, prefer circular checkboxes (`border-radius: 50%`) instead of generic squares.
     - Background Patterns: If the template needs lined, graph/grid, or dot notes, use a single `<div>` with `class="lined-bg"`, `class="grid-bg"`, or `class="dot-bg"` respectively (do NOT manually draw grid cells or lines in HTML).
+    - Design Utility Classes (CRITICAL): Prefer using the system's predefined utility classes in HTML instead of custom inline styles:
+      - Use `class="header-block"` for a prominent title block or section header.
+      - Use `class="card"` for modules, content containers, or card boxes.
+      - Use `class="checkbox-circle"` for round checklists or to-do circles.
+      - Use `class="badge"` for pill-shaped tags, badges, status labels, or indicators.
     - Stretch Columns: For multi-column layouts, always equalize column heights. Apply `align-items: stretch` to the flex row, and `height: 100%` with `display: flex; flex-direction: column` to the child columns so their bottom borders align perfectly.
     - Baseline Alignment: When combining different font sizes or styles in a single row (e.g. main title + small date label), use `align-items: baseline` to align text baselines.
     - Digit/Bullet Axis: For lists (to-do check circles) or timetable hours, always set a fixed column width (e.g., `width: 40px` or `width: 50px`) on the bullet/digit container to align the starting point of the text values vertically.
     - Header-Grid Axis: If the header is left-aligned, align the header's left margin with the left edge of the main grid frame. If centered, center both the header and grid on the same vertical axis.
+    - Outer Margin Safety (CRITICAL): The outermost template container (e.g., class="planner-wrapper") MUST have a consistent outer padding of `padding: 25px` or `padding: 30px` (never `0`) to prevent any text or borders from touching the margins of the A4 paper.
+    - List Row Alignment (CRITICAL): To-do list rows and list items MUST use `display: flex; align-items: center; gap: 10px; min-height: 35px;` to vertically center the checkbox/badge alongside the writing line and prevent overlapping.
+    - Table Cell Width Alignment (CRITICAL): Data rows and column headers in grids must align exactly. Always use matching flex values (e.g., `flex: 1`, `flex: 2`) or percentage widths (`width: 30%`, `width: 70%`) on both header cells and data cells.
+    - Metadata Alignment: Place form metadata (like Date, Weather, Subject, Page) opposite the main title or section title using a flex container with `display: flex; justify-content: space-between; align-items: baseline;` to create a balanced, magazine-style layout.
 No extra explanations, just code.
 """
 
@@ -60,6 +70,7 @@ Requirements:
 9. ADAPTIVE LAYOUT (CRITICAL): Adapt to Title. Description takes precedence over reference skeletons. Grids: leave date cells blank.
    - Even grid: cells get flex: 1, min-width: 0, box-sizing: border-box.
    - Uneven grid: matching flex values or % widths.
+   - Grid Header Sizing Safety: If a grid or table has a fixed-height header row (e.g. days of the week) and stretchable data rows below it styled with `flex: 1`, you MUST style the header row explicitly with `flex: none; height: XXpx;` (or `flex: 0 0 XXpx;`) and give it a distinct class (e.g. `class="row header-row"`) to prevent it from inheriting the generic `flex: 1` of standard rows, which causes broken layout gaps.
 10. TEXT HANDLING (CRITICAL):
     - ALWAYS include * {{ word-break: keep-all; overflow-wrap: normal; }} in <style> (wrap strictly at spaces, not mid-word).
     - NEVER use literal underscores (____).
@@ -77,6 +88,10 @@ Requirements:
     - Baseline Alignment: When combining different font sizes or styles in a single row (e.g. main title + small date label), use `align-items: baseline` to align text baselines.
     - Digit/Bullet Axis: For lists (to-do check circles) or timetable hours, always set a fixed column width (e.g., `width: 40px` or `width: 50px`) on the bullet/digit container to align the starting point of the text values vertically.
     - Header-Grid Axis: If the header is left-aligned, align the header's left margin with the left edge of the main grid frame. If centered, center both the header and grid on the same vertical axis.
+    - Outer Margin Safety (CRITICAL): The outermost template container (e.g., class="planner-wrapper") MUST have a consistent outer padding of `padding: 25px` or `padding: 30px` (never `0`) to prevent any text or borders from touching the margins of the A4 paper.
+    - List Row Alignment (CRITICAL): To-do list rows and list items MUST use `display: flex; align-items: center; gap: 10px; min-height: 35px;` to vertically center the checkbox/badge alongside the writing line and prevent overlapping.
+    - Table Cell Width Alignment (CRITICAL): Data rows and column headers in grids must align exactly. Always use matching flex values (e.g., `flex: 1`, `flex: 2`) or percentage widths (`width: 30%`, `width: 70%`) on both header cells and data cells.
+    - Metadata Alignment: Place form metadata (like Date, Weather, Subject, Page) opposite the main title or section title using a flex container with `display: flex; justify-content: space-between; align-items: baseline;` to create a balanced, magazine-style layout.
 No extra explanations, just code.
 """
 

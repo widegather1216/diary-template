@@ -1,7 +1,7 @@
 import re
 import urllib.parse
 from core.macros import process_repeat_macros, snap_css_to_grid
-from core.themes import apply_theme_aesthetics
+from core.themes import apply_theme_aesthetics, THEME_CONFIG
 
 def get_page_config(paper_size='A4', orientation='portrait'):
     """
@@ -70,7 +70,7 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
         llm_body = snap_css_to_grid(llm_body)
     
     dot_css = ""
-    line_color = '#333' if design_mode == 'guide' else '#e5e7eb'
+    line_color = '#333' if design_mode == 'guide' else THEME_CONFIG.get(style_theme, THEME_CONFIG['Minimal']).get('line_color', '#e5e7eb')
     
     # 1. Lined Background SVG
     lined_svg = f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><rect x='0' y='19' width='20' height='1' fill='{line_color}'/></svg>"

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; background-color: transparent; }
+
+body {
+    width: 100%; min-height: 1500px;
+    margin: 0 !important; padding: 0 !important;
+    background-color: white !important;
+    word-break: keep-all !important;
+    overflow-wrap: break-word !important;
+    
+}
+
+.page-container {
+    position: absolute !important;
+    top: 41.25px !important; 
+    left: 50% !important; 
+    margin-left: -350px !important;
+    width: 700px !important; 
+    height: 1040px !important;
+    display: flex; 
+    flex-direction: column;
+    overflow: hidden !important;
+}
+
+body { font-family: 'Inter', sans-serif; color: #2b2d42; } h1, h2, h3, .title { font-weight: 800; letter-spacing: -0.03em; color: #1d3557; } .page-container { position: relative; } .page-container::before { content: ''; position: absolute; top: -8px; left: -8px; width: 12px; height: 12px; border-top: 1px solid #8d99ae; border-left: 1px solid #8d99ae; pointer-events: none; } .page-container::after { content: ''; position: absolute; bottom: -8px; right: -8px; width: 12px; height: 12px; border-bottom: 1px solid #8d99ae; border-right: 1px solid #8d99ae; pointer-events: none; } .header-block { background-color: #f1f5f9; color: #1e293b; padding: 6px 12px; border-radius: 4px; font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.02em; text-align: center; } .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.02); } .checkbox-circle { width: 14px; height: 14px; border: 1.2px solid #cbd5e1; border-radius: 50%; display: inline-block; vertical-align: middle; } .badge { background: #e2e8f0; color: #475569; padding: 2px 6px; font-size: 0.7rem; border-radius: 4px; font-family: 'Inter', sans-serif; font-weight: 600; display: inline-block; }
+
+.lined-bg {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2720%27%20height%3D%2720%27%3E%3Crect%20x%3D%270%27%20y%3D%2719%27%20width%3D%2720%27%20height%3D%271%27%20fill%3D%27rgba%28141%2C%20153%2C%20174%2C%200.25%29%27/%3E%3C/svg%3E") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}
+.grid-bg {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2720%27%20height%3D%2720%27%3E%3Cpath%20d%3D%27M%2020%200%20L%2020%2020%20L%200%2020%27%20fill%3D%27none%27%20stroke%3D%27rgba%28141%2C%20153%2C%20174%2C%200.25%29%27%20stroke-width%3D%271%27/%3E%3C/svg%3E") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}
+.dot-bg {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2720%27%20height%3D%2720%27%3E%3Ccircle%20cx%3D%271%27%20cy%3D%271%27%20r%3D%271%27%20fill%3D%27rgba%28141%2C%20153%2C%20174%2C%200.25%29%27/%3E%3C/svg%3E") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}
+
+ * { box-sizing: border-box; word-break: keep-all; overflow-wrap: normal; } body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; } .planner-wrapper { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 20px; } .title { font-size: 28px; font-weight: bold; margin-bottom: 20px; } .calendar-container { display: flex; flex-direction: column; flex: 1; border-top: 1px solid #8d99ae; border-left: 1px solid #8d99ae; } .row { display: flex; flex: 1; align-items: stretch; } .cell { flex: 1; border-right: 1px solid #8d99ae; border-bottom: 1px solid #8d99ae; display: flex; flex-direction: column; overflow: hidden; } .header-cell { background: #f4f4f4; font-weight: bold; font-size: 14px; height: 40px; align-items: center; justify-content: center; display: flex; } .notes-section { margin-top: 20px; height: 150px; border: 1px solid #8d99ae; padding: 10px; } .lined-bg { background-image: linear-gradient(#ccc 1px, transparent 1px); background-size: 100% 24px; } 
+</style>
+</head>
+<body>
+    <div class="page-container">
+<div class="planner-wrapper"> <h1 class="title">Monthly Planner</h1> <div class="calendar-container"> <div class="row"> <div class="cell header-cell">SUN</div> <div class="cell header-cell">MON</div> <div class="cell header-cell">TUE</div> <div class="cell header-cell">WED</div> <div class="cell header-cell">THU</div> <div class="cell header-cell">FRI</div> <div class="cell header-cell">SAT</div> </div>  <div class="row"> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> </div>  <div class="row"> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> </div>  <div class="row"> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> </div>  <div class="row"> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> </div>  <div class="row"> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> <div class="cell"></div> </div>  </div> <div class="notes-section lined-bg"></div> </div>
+    </div>
+</body>
+</html>
