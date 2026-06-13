@@ -71,11 +71,32 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
     
     dot_css = ""
     line_color = '#333' if design_mode == 'guide' else '#e5e7eb'
+    
+    # 1. Lined Background SVG
     lined_svg = f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><rect x='0' y='19' width='20' height='1' fill='{line_color}'/></svg>"
     lined_svg_encoded = urllib.parse.quote(lined_svg)
+    
+    # 2. Grid (Graph) Background SVG
+    grid_svg = f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><path d='M 20 0 L 20 20 L 0 20' fill='none' stroke='{line_color}' stroke-width='1'/></svg>"
+    grid_svg_encoded = urllib.parse.quote(grid_svg)
+    
+    # 3. Dot Grid Background SVG
+    dot_pattern_svg = f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='1' cy='1' r='1' fill='{line_color}'/></svg>"
+    dot_pattern_svg_encoded = urllib.parse.quote(dot_pattern_svg)
+    
     lined_bg_css = f"""
 .lined-bg {{
     background-image: url("data:image/svg+xml,{lined_svg_encoded}") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}}
+.grid-bg {{
+    background-image: url("data:image/svg+xml,{grid_svg_encoded}") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}}
+.dot-bg {{
+    background-image: url("data:image/svg+xml,{dot_pattern_svg_encoded}") !important;
     background-position: top !important;
     background-repeat: repeat !important;
 }}

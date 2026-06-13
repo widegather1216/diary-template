@@ -105,6 +105,6 @@ LAYOUT_HINTS = {
     },
     "blank_note": {
         "keywords": ["blank", "grid note", "dot note", "lined note", "메모", "모눈", "도트", "노트 패드", "free note", "무지 노트", "유선 노트", "그리드 노트", "줄 노트", "메모지", "자유 노트"],
-        "text": "    - [Blank Note Layouts (Grid/Dot/Lined) / 메모 및 기본 노트]: Create standard note-taking templates: For Grid Note, fill the entire canvas with a uniform 20px grid of thin light-gray lines. For Dot Note, fill the canvas with a 20px grid of small dot elements. For Lined Note, create a header area (Title, Date) and fill the rest of the canvas with horizontal writing lines (must use class=\"lined-bg\") with a consistent 24px spacing."
+        "text": "    - [Blank Note Layouts (Grid/Dot/Lined) / 메모 및 기본 노트]: Create standard note-taking templates. For Grid Note, create a header area and fill the rest of the canvas with a single <div> having `class=\"grid-bg\"` and `flex-grow: 1` (do NOT manually write grid lines or grid cells). For Dot Note, fill the canvas with a single <div> having `class=\"dot-bg\"` and `flex-grow: 1` (do NOT manually write dots). For Lined Note, create a header area and fill the rest of the canvas with a <div> having `class=\"lined-bg\"` and `flex-grow: 1`."
     }
 }

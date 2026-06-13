@@ -15,10 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Interactive Sketch Elements
     const blueprintContainer = document.getElementById('blueprint-container');
+    const previewIframe = document.getElementById('preview-iframe');
     const loadingAnimationContainer = document.getElementById('loading-animation-container');
-    const sketchOuterBox = document.getElementById('sketch-outer-box');
-    const sketchLinesContainer = document.getElementById('sketch-lines-container');
-    const sketchTitleText = document.getElementById('sketch-title-text');
     
     const downloadLink = document.getElementById('download-link');
     
@@ -75,63 +73,205 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 600);
     };
 
-    // 2. Interactive Blueprint 로직
-    let hasRedrawnLines = false;
+    // 2. Interactive Blueprint & Real Preview 로직
+    let preGeneratedLayouts = {};
+    const styleThemeSelect = document.getElementById('styleTheme');
+    const designModeRadios = document.querySelectorAll('input[name="designMode"]');
 
-    // 제목 입력 시 테두리 그리기, 제목 각인, 그리고 **노트 가로선까지 한 번에 그리기**
-    if (titleInput && sketchOuterBox && sketchLinesContainer) {
+    const THEME_CONFIG = {
+        'Cute': {
+            'fonts': '<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600&family=Nanum+Pen+Script&display=swap" rel="stylesheet">',
+            'css': "body { font-family: 'Quicksand', 'Nanum Pen Script', sans-serif; color: #3d348b; } h1, h2, h3, .title { font-family: 'Pacifico', 'Nanum Pen Script', cursive; color: #f15bb5; } .page-container { position: relative; }",
+            'border_color': '#e0b1cb',
+            'soften_borders': true
+        },
+        'Editorial': {
+            'fonts': '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">',
+            'css': "body { font-family: 'Inter', sans-serif; color: #1a1a1a; background-color: #faf9f6 !important; } h1, h2, h3, .title { font-family: 'Playfair Display', serif; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #0d1b2a; } .page-container { position: relative; }",
+            'border_color': '#4a4e69',
+            'soften_borders': false
+        },
+        'Minimal': {
+            'fonts': '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">',
+            'css': "body { font-family: 'Inter', sans-serif; color: #2b2d42; } h1, h2, h3, .title { font-weight: 800; letter-spacing: -0.03em; color: #1d3557; } .page-container { position: relative; }",
+            'border_color': '#8d99ae',
+            'soften_borders': false
+        }
+    };
+
+    async function loadLayouts() {
+        try {
+            const response = await fetch('/static/pre_generated_layouts.json');
+            if (response.ok) {
+                preGeneratedLayouts = await response.json();
+                updatePreview('');
+            }
+        } catch (e) {
+            console.error('레이아웃 로드 실패:', e);
+        }
+    }
+    loadLayouts();
+
+    function getLayoutCategory(title) {
+        const text = title.toLowerCase().replace(/\s+/g, '');
+        if (!text) return 'cornell';
+        
+        const mappings = {
+            mandalart: ["mandalart", "만다라트", "만다라", "3x3", "81", "만달아트", "목표달성"],
+            weekly: ["weekly", "주간", "위클리", "일주일", "주별"],
+            daily: ["daily", "데일리", "일간", "하루", "오늘", "일기장", "저널", "journal", "다이어리", "다이얼리"],
+            yearly: ["yearly", "연간", "연간계획", "1년", "이어리", "year", "신년계획", "새해계획"],
+            todo: ["to-do", "todo", "투두", "할일", "태스크", "checklist", "체크리스트", "해야할일", "업무목록"],
+            habit: ["habit", "해빗", "습관", "루틴", "트래커", "tracker", "습관트래커", "습관형성", "습관기록", "루틴체크", "매일습관"],
+            ledger: ["ledger", "가계부", "금전", "지출", "용돈", "소비", "expense", "budget", "용돈기입장", "자산관리", "재정기록", "돈관리"],
+            cornell: ["cornell", "코넬", "노트", "필기", "notes", "코넬식", "필기노트", "강의노트", "수업필기"],
+            mindmap: ["mindmap", "마인드맵", "브레인스토밍", "생각정리", "idea", "아이디어", "생각그물", "아이디어맵", "생각매핑"],
+            reading_note: ["readingnote", "bookreview", "독서록", "독서노트", "책리뷰", "서평", "북리뷰", "책기록", "독서일기", "독후감", "독서감상문"],
+            monthly: ["monthly", "calendar", "월간", "캘린더", "달력", "한달", "계획표", "먼슬리", "플래너", "플레너", "스케줄러", "스케쥴러", "월별"]
+        };
+
+        for (const [key, keywords] of Object.entries(mappings)) {
+            if (keywords.some(kw => text.includes(kw))) {
+                return key;
+            }
+        }
+        return 'cornell';
+    }
+
+    function updatePreview(title) {
+        if (!title) {
+            previewIframe.classList.remove('is-loaded');
+            previewIframe.srcdoc = '';
+            return;
+        }
+        
+        const category = getLayoutCategory(title);
+        const designMode = document.querySelector('input[name="designMode"]:checked').value;
+        const styleTheme = styleThemeSelect.value;
+        
+        let html = preGeneratedLayouts[category] || preGeneratedLayouts['cornell'];
+        if (!html) return;
+        
+        let theme = THEME_CONFIG[styleTheme] || THEME_CONFIG['Minimal'];
+        let modifiedHtml = html;
+        
+        // 테마 스타일 주입
+        if (designMode !== 'guide') {
+            modifiedHtml = modifiedHtml.replace(/#333/g, theme.border_color);
+            if (theme.soften_borders) {
+                modifiedHtml = modifiedHtml.replace(/border-radius:\s*0/g, 'border-radius: 12px');
+            }
+            const themeCss = `<style>${theme.css}</style>`;
+            modifiedHtml = modifiedHtml.replace('</head>', theme.fonts + themeCss + '</head>');
+        }
+        
+        // 순차 페이드인 애니메이션 스타일 주입 (원래 테마 색상 및 스타일 그대로 페이드인)
+        const sketchStyles = `
+        <style>
+        body {
+            background-color: transparent !important;
+            overflow: hidden !important;
+        }
+        .page-container {
+            box-shadow: none !important;
+            border: none !important;
+            top: 20px !important;
+            margin-top: 0 !important;
+        }
+        /* 모든 요소 초기 투명화 및 순차 페이드인 */
+        div, section, table, tr, td, th, span, p, h1, h2, h3, h4, h5, h6, li, a, img {
+            animation: fadeInElement 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            opacity: 0;
+        }
+        /* 배경 격자선 페이드인 */
+        .lined-bg, .grid-bg, .dot-bg {
+            animation: fadeInBg 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+            opacity: 0;
+        }
+        @keyframes fadeInElement {
+            0% { opacity: 0; transform: translateY(2px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInBg {
+            0% { opacity: 0; }
+            100% { opacity: 0.35; }
+        }
+        </style>
+        `;
+        
+        // 양식명 동적 업데이트 및 순차 드로잉 지연시간 스크립트 주입
+        const displayTitle = title ? title : (preGeneratedLayouts[category] ? category.toUpperCase() + ' PLANNER' : 'NOTEBOOK');
+        const sketchScript = `
+        <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const titleTags = ['h1', 'h2', '.title', '.header-title'];
+            let titleUpdated = false;
+            for (const selector of titleTags) {
+                const titleEl = document.querySelector(selector);
+                if (titleEl) {
+                    titleEl.textContent = "${displayTitle.replace(/"/g, '\\"')}";
+                    titleUpdated = true;
+                    break;
+                }
+            }
+            if (!titleUpdated) {
+                const firstHeading = document.querySelector('h1, h2');
+                if (firstHeading) {
+                    firstHeading.textContent = "${displayTitle.replace(/"/g, '\\"')}";
+                }
+            }
+
+            const elements = document.querySelectorAll('div, section, span, p, h1, h2, h3, h4, h5, h6, li, tr, td');
+            elements.forEach((el, index) => {
+                el.style.animationDelay = (index * 0.012) + 's';
+            });
+        });
+        </script>
+        `;
+        
+        modifiedHtml = modifiedHtml.replace('</head>', sketchStyles + sketchScript + '</head>');
+        
+        previewIframe.classList.remove('is-loaded');
+        previewIframe.srcdoc = modifiedHtml;
+        
+        previewIframe.onload = () => {
+            previewIframe.classList.add('is-loaded');
+        };
+    }
+
+    let debounceTimer = null;
+    if (titleInput) {
         titleInput.addEventListener('input', (e) => {
             const val = e.target.value.trim();
-            sketchTitleText.textContent = val;
+            clearTimeout(debounceTimer);
             
-            if (val !== '') {
-                sketchOuterBox.classList.add('is-active');
-                
-                // 제목만 입력해도 캔버스가 꽉 차 보이도록 선을 같이 그려줍니다.
-                if (!hasRedrawnLines && !sketchLinesContainer.classList.contains('is-active')) {
-                    sketchLinesContainer.classList.add('is-active');
-                }
-            } else {
-                sketchOuterBox.classList.remove('is-active');
+            if (!val) {
+                updatePreview('');
+                return;
             }
+            
+            debounceTimer = setTimeout(() => {
+                updatePreview(val);
+            }, 600);
         });
     }
 
-    // 상세 내용 최초 입력 시, 기존 줄 날려버리고 새로 그리기 (Redraw Sequence)
-    if (descInput && sketchLinesContainer) {
-        descInput.addEventListener('input', (e) => {
-            const val = e.target.value.trim();
-            if (val !== '' && !hasRedrawnLines && sketchLinesContainer.classList.contains('is-active')) {
-                hasRedrawnLines = true; // 1회만 발동
-                
-                // 1. 기존 노트 줄들을 우측으로 휙 날려버림
-                sketchLinesContainer.classList.add('fly-away-lines');
-                
-                // 2. 날아가는 시간(0.4초) 대기 후, 초기화하고 다시 그림
-                setTimeout(() => {
-                    sketchLinesContainer.classList.remove('is-active', 'fly-away-lines');
-                    // 강제 리플로우 (애니메이션 재시작을 위함)
-                    void sketchLinesContainer.offsetWidth;
-                    sketchLinesContainer.classList.add('is-active');
-                }, 400);
-            }
+    if (styleThemeSelect) {
+        styleThemeSelect.addEventListener('change', (e) => {
+            updatePreview(titleInput.value.trim());
         });
     }
 
-    // 아날로그 모드일 때 디자인 스타일 선택 비활성화
-    const designModeRadios = document.querySelectorAll('input[name="designMode"]');
-    const styleThemeSelect = document.getElementById('styleTheme');
-    
     designModeRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
             if (e.target.value === 'guide') {
                 styleThemeSelect.disabled = true;
-                // 시각적으로도 비활성화됨을 표시하기 위해 부모에 클래스 추가 가능
                 styleThemeSelect.parentElement.style.opacity = '0.5';
             } else {
                 styleThemeSelect.disabled = false;
                 styleThemeSelect.parentElement.style.opacity = '1';
             }
+            updatePreview(titleInput.value.trim());
         });
     });
 

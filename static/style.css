@@ -183,10 +183,8 @@ select { appearance: none; -webkit-appearance: none; padding-right: 2.25rem; cur
 /* 캔버스 사이즈 거대화 (Full-page 활용) */
 .sketch-paper {
     width: 22.5rem; height: 31.25rem; background: #ffffff; border-radius: 0.25rem;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.06); position: relative; padding: 1.5rem; margin-bottom: 1.5rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06); position: relative; padding: 0.5rem; margin-bottom: 1.5rem;
     border: 1px solid rgba(0,0,0,0.03); overflow: hidden;
-    background-image: radial-gradient(rgba(30,41,59,0.08) 1px, transparent 1px);
-    background-size: 1rem 1rem; background-position: 0.5rem 0.5rem;
 }
 
 .paper-watermark {
@@ -203,7 +201,23 @@ select { appearance: none; -webkit-appearance: none; padding-right: 2.25rem; cur
     100% { transform: translateY(-150%); opacity: 0; }
 }
 
-.sketch-box, .sketch-line { background: transparent; border-color: transparent; }
+.preview-iframe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.43);
+    transform-origin: center center;
+    width: 794px; /* A4 기준 가로 크기 */
+    height: 1123px; /* A4 기준 세로 크기 */
+    border: none;
+    background: transparent;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+.preview-iframe.is-loaded {
+    opacity: 1;
+}
 
 /* 큰 테두리 박스 (넓은 면적 확보, 중앙 정렬 팽창) */
 .outer-box {

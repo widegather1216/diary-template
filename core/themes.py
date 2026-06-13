@@ -2,21 +2,21 @@
 
 THEME_CONFIG = {
     'Cute': {
-        'fonts': '<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">',
-        'css': "body { font-family: 'Quicksand', sans-serif; color: #4a4a4a; } h1, h2, h3, .title { font-family: 'Pacifico', cursive; color: #7a8b99; }",
-        'border_color': '#8fa1b3',
+        'fonts': '<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600&family=Nanum+Pen+Script&display=swap" rel="stylesheet">',
+        'css': "body { font-family: 'Quicksand', 'Nanum Pen Script', sans-serif; color: #3d348b; } h1, h2, h3, .title { font-family: 'Pacifico', 'Nanum Pen Script', cursive; color: #f15bb5; } .page-container { position: relative; } .page-container::before { content: ''; position: absolute; top: -8px; left: -8px; width: 12px; height: 12px; border-top: 1px solid #e0b1cb; border-left: 1px solid #e0b1cb; pointer-events: none; } .page-container::after { content: ''; position: absolute; bottom: -8px; right: -8px; width: 12px; height: 12px; border-bottom: 1px solid #e0b1cb; border-right: 1px solid #e0b1cb; pointer-events: none; }",
+        'border_color': '#e0b1cb',
         'soften_borders': True
     },
     'Editorial': {
-        'fonts': '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">',
-        'css': "body { font-family: 'Cormorant Garamond', serif; color: #2b2b2b; background-color: #fdfdfd !important; } h1, h2, h3, .title { font-family: 'Playfair Display', serif; text-transform: uppercase; letter-spacing: 1px; }",
-        'border_color': '#2b2b2b',
+        'fonts': '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">',
+        'css': "body { font-family: 'Inter', sans-serif; color: #1a1a1a; background-color: #faf9f6 !important; } h1, h2, h3, .title { font-family: 'Playfair Display', serif; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #0d1b2a; } .page-container { position: relative; } .page-container::before { content: ''; position: absolute; top: -8px; left: -8px; width: 12px; height: 12px; border-top: 1px solid #4a4e69; border-left: 1px solid #4a4e69; pointer-events: none; } .page-container::after { content: ''; position: absolute; bottom: -8px; right: -8px; width: 12px; height: 12px; border-bottom: 1px solid #4a4e69; border-right: 1px solid #4a4e69; pointer-events: none; }",
+        'border_color': '#4a4e69',
         'soften_borders': False
     },
     'Minimal': {
-        'fonts': '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">',
-        'css': "body { font-family: 'Inter', sans-serif; color: #1a1a1a; }",
-        'border_color': '#2c3e50',
+        'fonts': '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">',
+        'css': "body { font-family: 'Inter', sans-serif; color: #2b2d42; } h1, h2, h3, .title { font-weight: 800; letter-spacing: -0.03em; color: #1d3557; } .page-container { position: relative; } .page-container::before { content: ''; position: absolute; top: -8px; left: -8px; width: 12px; height: 12px; border-top: 1px solid #8d99ae; border-left: 1px solid #8d99ae; pointer-events: none; } .page-container::after { content: ''; position: absolute; bottom: -8px; right: -8px; width: 12px; height: 12px; border-bottom: 1px solid #8d99ae; border-right: 1px solid #8d99ae; pointer-events: none; }",
+        'border_color': '#8d99ae',
         'soften_borders': False
     }
 }

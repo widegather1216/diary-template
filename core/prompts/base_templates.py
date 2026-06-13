@@ -26,6 +26,16 @@ Requirements:
 8. COMMON LAYOUT HINTS (CRITICAL STRUCTURES):
 {layout_hints_str}
 9. NO JAVASCRIPT: Output ONLY pure HTML/CSS. No <script>.
+10. AESTHETICS & ALIGNMENT (CRITICAL):
+    - Negative Space: Ensure at least 15-20% of the canvas area is clean, empty space (Negative Space) for writing and visual breathing room. Do NOT pack too many elements tightly.
+    - Spacing: Leave proper gap or margin (e.g. `margin-bottom: 20px` or `gap: 15px`) between major sections.
+    - Typography Hierarchy: Set a clear size/weight contrast between main titles (large, heavy weight) and secondary labels (small, lighter weight).
+    - Decorative details: Utilize fine dotted (`1px dotted #ccc`) or dashed borders for auxiliary grid lines or checkboxes. For Cute style, prefer circular checkboxes (`border-radius: 50%`) instead of generic squares.
+    - Background Patterns: If the template needs lined, graph/grid, or dot notes, use a single `<div>` with `class="lined-bg"`, `class="grid-bg"`, or `class="dot-bg"` respectively (do NOT manually draw grid cells or lines in HTML).
+    - Stretch Columns: For multi-column layouts, always equalize column heights. Apply `align-items: stretch` to the flex row, and `height: 100%` with `display: flex; flex-direction: column` to the child columns so their bottom borders align perfectly.
+    - Baseline Alignment: When combining different font sizes or styles in a single row (e.g. main title + small date label), use `align-items: baseline` to align text baselines.
+    - Digit/Bullet Axis: For lists (to-do check circles) or timetable hours, always set a fixed column width (e.g., `width: 40px` or `width: 50px`) on the bullet/digit container to align the starting point of the text values vertically.
+    - Header-Grid Axis: If the header is left-aligned, align the header's left margin with the left edge of the main grid frame. If centered, center both the header and grid on the same vertical axis.
 No extra explanations, just code.
 """
 
@@ -57,6 +67,16 @@ Requirements:
     - NEVER use white-space: nowrap; on large cells. Title (Form Name): do NOT use nowrap.
 11. COMMON LAYOUT HINTS (CRITICAL STRUCTURES):
 {layout_hints_str}
+12. AESTHETICS & ALIGNMENT (CRITICAL):
+    - Negative Space: Ensure at least 15-20% of the canvas area is clean, empty space (Negative Space) for writing and visual breathing room. Do NOT pack too many elements tightly.
+    - Spacing: Leave proper gap or margin (e.g. `margin-bottom: 20px` or `gap: 15px`) between major sections.
+    - Typography Hierarchy: Set a clear size/weight contrast between main titles (large, heavy weight) and secondary labels (small, lighter weight).
+    - Decorative details: Utilize fine dotted (`1px dotted #333`) or dashed borders for auxiliary grid lines or checkboxes. For Cute style, prefer circular checkboxes (`border-radius: 50%`) instead of generic squares.
+    - Background Patterns: If the template needs lined, graph/grid, or dot notes, use a single `<div>` with `class="lined-bg"`, `class="grid-bg"`, or `class="dot-bg"` respectively (do NOT manually draw grid cells or lines in HTML).
+    - Stretch Columns: For multi-column layouts, always equalize column heights. Apply `align-items: stretch` to the flex row, and `height: 100%` with `display: flex; flex-direction: column` to the child columns so their bottom borders align perfectly.
+    - Baseline Alignment: When combining different font sizes or styles in a single row (e.g. main title + small date label), use `align-items: baseline` to align text baselines.
+    - Digit/Bullet Axis: For lists (to-do check circles) or timetable hours, always set a fixed column width (e.g., `width: 40px` or `width: 50px`) on the bullet/digit container to align the starting point of the text values vertically.
+    - Header-Grid Axis: If the header is left-aligned, align the header's left margin with the left edge of the main grid frame. If centered, center both the header and grid on the same vertical axis.
 No extra explanations, just code.
 """
 
