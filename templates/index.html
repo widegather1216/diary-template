@@ -6,7 +6,8 @@
     <title>FormWeaver - AI diary template Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=8">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=10">
 </head>
 <body>
     <div class="diary-wrapper" id="app-wrapper">
@@ -33,7 +34,7 @@
                 <form id="generator-form" class="generator-form">
                     <div class="form-group">
                         <label for="title">양식명</label>
-                        <input type="text" id="title" placeholder="예: 캘린더, 독서노트, 회의록, 주간 스케쥴러 ... " autocomplete="off" required>
+                        <input type="text" id="title" placeholder="예: 먼슬리 플레너, 독서노트, 회의록, 주간 스케쥴러 ... " autocomplete="off" required>
                     </div>
 
                     <div class="form-group">
@@ -159,6 +160,18 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Warning Bubble & Curved Arrow -->
+                                <div id="preview-warning-bubble" class="preview-warning-bubble">
+                                    <div id="warning-message" class="warning-message"></div>
+                                    <div class="warning-arrow-svg">
+                                        <svg width="100" height="60" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path class="arrow-line" d="M 60 10 Q 35 12, 15 45" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                                            <path class="arrow-head" d="M 27 40 L 15 45 L 17 30" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                        </svg>
+                                    </div>
+                                </div>
+
                                 <p id="canvas-status-text" class="status-text hidden">템플릿을 생성 중입니다...</p>
                             </div>
                             
@@ -197,6 +210,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}?v=7"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=8"></script>
 </body>
 </html>

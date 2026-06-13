@@ -481,3 +481,83 @@ body.is-generating-mode .sketch-paper { animation: pulsePaper 3s ease-in-out inf
 .prev-btn { left: 1.5rem; }
 
 .front .visual-panel { position: absolute; width: 100%; height: 100%; }
+
+/* -------------------------------- */
+/* Preview Warning Bubble & Arrow   */
+/* -------------------------------- */
+.preview-warning-bubble {
+    position: absolute;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    width: 22.5rem;
+    max-width: calc(100% - 2.5rem);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.preview-warning-bubble.show-warning {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+.is-generating-mode .preview-warning-bubble {
+    display: none !important;
+}
+
+.warning-message {
+    font-family: 'KyoboHandwriting', 'Kyobo Handwriting', cursive, sans-serif;
+    font-size: 1.1rem;
+    color: #475569;
+    line-height: 1.45;
+    text-align: left;
+    white-space: normal;
+    width: 100%;
+    word-break: keep-all;
+    position: relative;
+    font-weight: 400;
+    text-shadow: 0.5px 0.5px 0.5px rgba(255,255,255,0.8);
+}
+.warning-message strong {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.warning-arrow-svg {
+    margin-top: 0.2rem;
+    margin-left: 1.2rem;
+    filter: drop-shadow(0.5px 1px 1px rgba(255,255,255,0.8));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.preview-warning-bubble.draw-arrow .warning-arrow-svg {
+    opacity: 1;
+}
+.warning-arrow-svg .arrow-line {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    stroke: #64748b;
+}
+.warning-arrow-svg .arrow-head {
+    stroke-dasharray: 30;
+    stroke-dashoffset: 30;
+    stroke: #64748b;
+}
+
+.preview-warning-bubble.draw-arrow .arrow-line {
+    animation: drawLine 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+.preview-warning-bubble.draw-arrow .arrow-head {
+    animation: drawHead 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.6s forwards;
+}
+
+@keyframes drawLine {
+    to { stroke-dashoffset: 0; }
+}
+@keyframes drawHead {
+    to { stroke-dashoffset: 0; }
+}

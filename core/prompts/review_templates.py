@@ -6,7 +6,7 @@ CRITICAL: You MUST also preserve and correctly apply the user's original request
 - Custom Requests / Description: {description}
 
 [DESIGN RULES]
-1. CRITICAL: The outermost wrapper MUST have `padding: 0;`. Remove any padding on it.
+1. CRITICAL: The outermost wrapper MUST have `padding: 10px;`. Remove any other padding on it.
 2. CRITICAL: DO NOT include instructional texts in parentheses (e.g. `(Draw a line)`).
 3. Ensure text inside boxes is vertically centered using `display: flex; align-items: center; justify-content: center;`.
 4. CRITICAL: NEVER use literal underscores (`__________`) for blank spaces! Remove them entirely. Instead, use a flex container with `border-bottom` for the blank area.

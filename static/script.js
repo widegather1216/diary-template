@@ -21,6 +21,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadLink = document.getElementById('download-link');
     
     let currentFileId = null;
+    let typewriterTimeout = null;
+
+    function typeWriter(element, text, speed, callback) {
+        element.textContent = '';
+        let i = 0;
+        function type() {
+            if (i < text.length) {
+                element.textContent += text.charAt(i);
+                i++;
+                typewriterTimeout = setTimeout(type, speed);
+            } else if (callback) {
+                callback();
+            }
+        }
+        type();
+    }
 
     const diaryBand = document.getElementById('diary-band');
 
@@ -127,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
             todo: ["to-do", "todo", "투두", "할일", "태스크", "checklist", "체크리스트", "해야할일", "업무목록"],
             habit: ["habit", "해빗", "습관", "루틴", "트래커", "tracker", "습관트래커", "습관형성", "습관기록", "루틴체크", "매일습관"],
             ledger: ["ledger", "가계부", "금전", "지출", "용돈", "소비", "expense", "budget", "용돈기입장", "자산관리", "재정기록", "돈관리"],
-            cornell: ["cornell", "코넬", "노트", "필기", "notes", "코넬식", "필기노트", "강의노트", "수업필기"],
             mindmap: ["mindmap", "마인드맵", "브레인스토밍", "생각정리", "idea", "아이디어", "생각그물", "아이디어맵", "생각매핑"],
             reading_note: ["readingnote", "bookreview", "독서록", "독서노트", "책리뷰", "서평", "북리뷰", "책기록", "독서일기", "독후감", "독서감상문"],
             diet: ["diet", "meal", "식단", "식단표", "다이어트", "식사", "food", "메뉴", "식사계획"],
@@ -146,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             pet: ["pet", "animal", "반려동물", "강아지", "고양이", "집사", "동물케어", "반려견일지", "반려묘일지", "펫다이어리", "댕댕이", "냥냥이"],
             sleep: ["sleep", "energy", "수면", "에너지", "컨디션", "잠", "dream", "꿈", "수면패턴", "수면일기", "잠기록", "꿈일기"],
             blank_note: ["blank", "gridnote", "dotnote", "linednote", "메모", "모눈", "도트", "노트패드", "freenote", "무지노트", "유선노트", "그리드노트", "줄노트", "메모지", "자유노트"],
+            cornell: ["cornell", "코넬", "노트", "필기", "notes", "코넬식", "필기노트", "강의노트", "수업필기"],
             monthly: ["monthly", "calendar", "월간", "캘린더", "달력", "한달", "계획표", "먼슬리", "플래너", "플레너", "스케줄러", "스케쥴러", "월별"]
         };
 
@@ -158,9 +174,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updatePreview(title) {
+        const warningBubble = document.getElementById('preview-warning-bubble');
         if (!title) {
             previewIframe.classList.remove('is-loaded');
+            previewIframe.onload = null; // Unbind onload to prevent blank document load from showing warning
             previewIframe.srcdoc = '';
+            clearTimeout(typewriterTimeout);
+            if (warningBubble) {
+                warningBubble.classList.remove('show-warning', 'draw-arrow');
+                const warningMsgEl = document.getElementById('warning-message');
+                if (warningMsgEl) warningMsgEl.textContent = '';
+            }
             return;
         }
         
@@ -271,11 +295,39 @@ document.addEventListener('DOMContentLoaded', () => {
         
         modifiedHtml = modifiedHtml.replace('</head>', sketchStyles + sketchScript + '</head>');
         
+        // Clear previous typewriter and reset warning bubble before loading new preview
+        clearTimeout(typewriterTimeout);
+        if (warningBubble) {
+            warningBubble.classList.remove('show-warning', 'draw-arrow');
+            const warningMsgEl = document.getElementById('warning-message');
+            if (warningMsgEl) warningMsgEl.textContent = '';
+        }
+
         previewIframe.classList.remove('is-loaded');
         previewIframe.srcdoc = modifiedHtml;
         
         previewIframe.onload = () => {
+            // Safety check: if user cleared the input while loading, do not show warning
+            if (!titleInput || !titleInput.value.trim()) {
+                previewIframe.classList.remove('is-loaded');
+                if (warningBubble) {
+                    warningBubble.classList.remove('show-warning', 'draw-arrow');
+                    const warningMsgEl = document.getElementById('warning-message');
+                    if (warningMsgEl) warningMsgEl.textContent = '';
+                }
+                return;
+            }
+            
             previewIframe.classList.add('is-loaded');
+            if (warningBubble) {
+                warningBubble.classList.add('show-warning');
+                const warningMsgEl = document.getElementById('warning-message');
+                if (warningMsgEl) {
+                    typeWriter(warningMsgEl, "양식명만 입력 했을 때의 미리보기입니다. 상세 내용은 'PDF 생성하기' 버튼으로 완성하세요!", 30, () => {
+                        warningBubble.classList.add('draw-arrow');
+                    });
+                }
+            }
         };
     }
 
