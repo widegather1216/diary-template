@@ -9,9 +9,9 @@ CRITICAL: You MUST also preserve and correctly apply the user's original request
 1. CRITICAL: The outermost wrapper MUST have `padding: 10px;`. Remove any other padding on it.
 2. CRITICAL: DO NOT include instructional texts in parentheses (e.g. `(Draw a line)`).
 3. Ensure text inside boxes is vertically centered using `display: flex; align-items: center; justify-content: center;`.
-4. CRITICAL: NEVER use literal underscores (`__________`) for blank spaces! Remove them entirely. Instead, use a flex container with `border-bottom` for the blank area.
+4. CRITICAL: NEVER use literal underscores (`__________`) for blank spaces! Remove them entirely. Instead, use a flex container with `border-bottom` for the blank area. The underline element MUST contain a non-breaking space: `<div class="underline">&nbsp;</div>` to force baseline alignment in WeasyPrint.
 5. CRITICAL: Ensure `overflow: hidden;` is applied to all boxes and cells so text doesn't spill out. DO NOT use `white-space: nowrap;` on large sections.
-6. CRITICAL: For text label + blank line rows, DO NOT hardcode widths. Use `white-space: nowrap;` on the label, and `flex: 1; border-bottom: 1px solid #333;` on the blank area. The parent MUST have `align-items: flex-end;`.
+6. CRITICAL: For text label + blank line rows, DO NOT hardcode widths. Use `white-space: nowrap;` on the label, and `flex: 1; border-bottom: 1px solid #333;` on the blank area. The blank area (underline) MUST contain a non-breaking space `&nbsp;`. The parent container MUST have `align-items: baseline;` to ensure perfect vertical alignment.
 7. CRITICAL: To prevent double-thick (2px) borders, do NOT use generic border: 1px solid ... on all cells. Let the wrapper container have border-top and border-left, and let inner cells/rows only have border-right and border-bottom.
 7a. CRITICAL: Do NOT remove the right or bottom borders of the cells on the edges (do NOT use `:nth-child` to set `border-right: none` or `border-bottom: none`). The cells' right/bottom borders must remain to form the right/bottom outer edges of the grid, ensuring the entire grid border is completely closed.
 7b. CRITICAL: For Weekly Planners or Calendars, do NOT use generic placeholders like 'DAY 1', 'DAY 2', or 'Day {{i+1}}'. Write the actual day names (e.g. 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN') manually.
@@ -25,6 +25,8 @@ CRITICAL: You MUST also preserve and correctly apply the user's original request
 7j. CRITICAL: Column Height Alignment. For multi-column layouts, verify if the bottom lines of adjacent columns match. Use `align-items: stretch` on the parent and `height: 100%` on children to sync heights.
 7k. CRITICAL: Margin Unity. Ensure all padding, margins, and gaps use uniform modular spacing (8px/20px multiples) to establish a clean vertical rhythm.
 7l. CRITICAL: Bullet/Digit Axis. Verify if vertical checklists or timetables have fixed width columns for numbers/icons (e.g. `width: 40px` or `width: 50px`) to prevent horizontal layout shift and ensure vertical axis alignment.
+7m. CRITICAL: For the main page header, DO NOT use a background banner container (`class="header-block"`). Instead, use a clean, bannerless flex row (`display: flex; justify-content: space-between; align-items: flex-end;`) where the Title is on the left and the Metadata fields are on the right.
+7n. CRITICAL: Inside the metadata container, EACH metadata field (label and input line) MUST be wrapped together in a single flex container (e.g., `class="meta-item"` or `class="meta-field"`). The underline element MUST contain `&nbsp;` (e.g., `<div class="underline">&nbsp;</div>`). Within the flex container, apply `align-items: baseline` so the text label and underline align perfectly on the same vertical level and move together.
 8. CRITICAL: Replace `white-space: nowrap;` on the main Title with `word-break: keep-all; overflow-wrap: normal;` so words wrap at spaces but do not break in the middle of a word.
 {dynamic_rules}
 Generated HTML:

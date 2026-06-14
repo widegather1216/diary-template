@@ -2,7 +2,7 @@ from core.prompts.base_templates import SYSTEM_PROMPT_TEMPLATE, GUIDE_SYSTEM_PRO
 from core.prompts.layout_hints import LAYOUT_HINTS
 from core.prompts.review_templates import REVIEW_PROMPT_TEMPLATE
 
-def get_system_prompts(title: str = "", description: str = ""):
+def get_system_prompts(title: str = "", description: str = "", category: str = None):
     # Space-insensitive matching logic: remove all spacing
     search_text = f"{title}{description}".lower().replace(" ", "").replace("\t", "").replace("\n", "")
     
@@ -15,7 +15,7 @@ def get_system_prompts(title: str = "", description: str = ""):
         if hint_id in base_keys:
             continue
         cleaned_keywords = [kw.lower().replace(" ", "") for kw in hint_data["keywords"]]
-        if any(kw in search_text for kw in cleaned_keywords):
+        if any(kw in search_text for kw in cleaned_keywords) or (category and hint_id == category):
             matched_hints_dict[hint_id] = hint_data["text"]
             
     layout_hints_str = "\n".join(matched_hints_dict.values())

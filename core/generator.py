@@ -9,7 +9,7 @@ from core.renderer import get_page_config, assemble_master_html
 class LayoutResponse(BaseModel):
     html: str
 
-def _request_initial_layout(client, title, description, page_size, orientation, style_theme, active_prompt, config):
+def _request_initial_layout(client, title, description, page_size, orientation, style_theme, active_prompt, config, category=None):
     style_instructions = {
         'Minimal': "Use sans-serif fonts (e.g., 'Inter', 'Helvetica'), thin 1px borders, abundant whitespace, and completely remove any unnecessary decorations or shading. Keep it clean and modern.",
         'Cute': "Use bubbly or hand-drawn fonts (e.g., 'Quicksand', 'Architects Daughter'), rounded borders (e.g., `border-radius: 12px`), dotted/dashed lines, and soft aesthetics. It should look friendly, cozy, and cute like a journaling notebook.",
@@ -17,6 +17,22 @@ def _request_initial_layout(client, title, description, page_size, orientation, 
     }
     style_detail = style_instructions.get(style_theme, style_instructions['Minimal'])
     
+    metadata_hint = ""
+    if category == 'monthly':
+        metadata_hint = "\n    - [CRITICAL] TARGET METADATA: MUST include 'Year' (년도) and 'Month' (달/월) fields grouped together."
+    elif category == 'daily':
+        metadata_hint = "\n    - [CRITICAL] TARGET METADATA: MUST include 'Date' (날짜) and 'Weather' (날씨) or 'Mood' (기분) fields grouped together."
+    elif category == 'weekly':
+        metadata_hint = "\n    - [CRITICAL] TARGET METADATA: MUST include 'Date/Week' (날짜/주차) fields grouped together."
+    elif category == 'cornell':
+        metadata_hint = "\n    - [CRITICAL] TARGET METADATA: MUST include 'Date' and 'Subject' (주제) fields grouped together."
+    elif category == 'ledger':
+        metadata_hint = "\n    - [CRITICAL] TARGET METADATA: MUST include 'Date' and 'Page' fields grouped together."
+    elif category == 'reading_note':
+        metadata_hint = "\n    - [CRITICAL] TARGET METADATA: MUST include 'Book Title', 'Author', 'Genre', 'Date Read', and 'Rating' (5 stars/circles) fields. Layout them across the full width or align left below the title, allowing ample space for writing (DO NOT align them to the right)."
+    elif category == 'recipe':
+        metadata_hint = "\n    - [CRITICAL] TARGET METADATA: MUST include 'Recipe Name', 'Prep Time', 'Cook Time', and 'Rating' fields. Layout them across the full width or align left below the title, allowing ample space for writing (DO NOT align them to the right)."
+        
     prompt = f"""
     [TARGET DESIGN PARAMETERS]
     - Form Title (Name): {title}
@@ -25,7 +41,7 @@ def _request_initial_layout(client, title, description, page_size, orientation, 
     - Design Style Theme: {style_theme}
     - Style Guide Instructions: {style_detail}
     - Page Size: {page_size}
-    - Page Orientation: {orientation}
+    - Page Orientation: {orientation}{metadata_hint}
     - Description / Custom Requests: {description}
     
     Generate the inner HTML and `<style>` according to the parameters and description above.
@@ -94,14 +110,14 @@ def _request_self_reflection(client, title, description, active_prompt, html_con
     except ValueError:
         return html_content # Fallback to first pass output if blocked
 
-def generate_layout_html(title, description, page_size, design_mode, orientation, style_theme='Minimal'):
+def generate_layout_html(title, description, page_size, design_mode, orientation, style_theme='Minimal', category=None):
     """
     Generates layout HTML using Gemini API with a 2-pass verification process.
     Uses the modern google-genai client.
     """
     client = get_gemini_client()
     config = get_page_config(page_size, orientation)
-    SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(title=title, description=description)
+    SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(title=title, description=description, category=category)
     
     active_prompt = GUIDE_SYSTEM_PROMPT if design_mode == 'guide' else SYSTEM_PROMPT
     
@@ -114,7 +130,8 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
         orientation=orientation,
         style_theme=style_theme,
         active_prompt=active_prompt,
-        config=config
+        config=config,
+        category=category
     )
     
     # Pass 2: Self-Reflection

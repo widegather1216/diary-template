@@ -15,7 +15,7 @@ Requirements:
    - Prevent 2px double-borders: outer wrapper has `border-top` and `border-left`, while inner cells only have `border-right` and `border-bottom` (with `box-sizing: border-box`). Do NOT remove the right or bottom borders of the cells on the edges (do NOT use `:nth-child` to set `border-right: none` or `border-bottom: none`). The right/bottom borders of the cells must remain to form the right/bottom outer edges of the grid, ensuring the entire grid border is completely closed.
    - To prevent the top-right corner from being open/disconnected: If the Title (or header) is borderless, it MUST be placed OUTSIDE the bordered grid container. Do not apply `border-top` or `border-left` to a global wrapper container if it contains any borderless elements (like a borderless title) alongside bordered grid cells.
    - Notes Area Border Closure: If a Notes area (class="lined-bg") is placed independently or right below a borderless header, you MUST explicitly ensure its top boundary is closed either by the parent wrapper's `border-top` or by adding a top border directly to the notes container if there is spacing.
-   - Underlines: do NOT use literal underscores (_____). Use flex container, label with nowrap, empty div with flex: 1 & border-bottom.
+   - Underlines: do NOT use literal underscores (_____). Use flex container, label with nowrap, and a div/span with flex: 1 & border-bottom. The underline element MUST contain a non-breaking space: `<div class="underline">&nbsp;</div>` to align perfectly on the text baseline.
 5. DYNAMIC REPEAT MACRO (CRITICAL): Use <repeat count="N">...</repeat> for grids/repetition. Use sequence variables: {{i}}, {{i+1}}, {{i+6:02d}} (always keep 'i' as the starting variable in mathematical expressions like {{i+8:02d}}).
    - Count must strictly use double quotes (count="N"). No self-closing <repeat count="N" /> tags.
    - Do NOT use the repeat macro if you need to output unique non-numeric strings (like day names MON, TUE...) inside the loop. In such cases, you MUST write the HTML elements manually. NEVER use split() or Javascript to bypass this.
@@ -45,7 +45,8 @@ Requirements:
     - Outer Margin Safety (CRITICAL): The outermost template container (e.g., class="planner-wrapper") MUST have a consistent outer padding of `padding: 10px` (never large like 30px) to prevent wasting printable A4 area, since the system already wraps it in a page-container with ~40px margin.
     - List Row Alignment (CRITICAL): To-do list rows and list items MUST use `display: flex; align-items: center; gap: 10px; min-height: 35px;` to vertically center the checkbox/badge alongside the writing line and prevent overlapping.
     - Table Cell Width Alignment (CRITICAL): Data rows and column headers in grids must align exactly. Always use matching flex values (e.g., `flex: 1`, `flex: 2`) or percentage widths (`width: 30%`, `width: 70%`) on both header cells and data cells.
-    - Metadata Alignment: Place form metadata (like Date, Weather, Subject, Page) opposite the main title or section title using a flex container with `display: flex; justify-content: space-between; align-items: baseline;` to create a balanced, magazine-style layout.
+    - Metadata Alignment: Place form metadata (like Date, Weather, Subject, Page, Year, Month) opposite the main title or section title using a flex container with `display: flex; justify-content: space-between; align-items: flex-end;` to create a balanced, magazine-style layout. Avoid placing metadata inside a centered header banner (`class="header-block"`) as it causes layout wrapping and alignment bugs; keep them outside and aligned on the same horizontal row (opposite the title) or below it.
+      For the main page header, avoid using a background banner box (`class="header-block"`) for the title and metadata. Instead, use a clean, borderless flex row (`display: flex; justify-content: space-between; align-items: flex-end;`) to place the Title on the left and the Metadata fields on the right. This prevents title wrapping and border overlap bugs.
 No extra explanations, just code.
 """
 
@@ -73,7 +74,7 @@ Requirements:
    - Grid Header Sizing Safety: If a grid or table has a fixed-height header row (e.g. days of the week) and stretchable data rows below it styled with `flex: 1`, you MUST style the header row explicitly with `flex: none; height: XXpx;` (or `flex: 0 0 XXpx;`) and give it a distinct class (e.g. `class="row header-row"`) to prevent it from inheriting the generic `flex: 1` of standard rows, which causes broken layout gaps.
 10. TEXT HANDLING (CRITICAL):
     - ALWAYS include * {{ word-break: keep-all; overflow-wrap: normal; }} in <style> (wrap strictly at spaces, not mid-word).
-    - NEVER use literal underscores (____).
+    - NEVER use literal underscores (____). Use a flex container, label with nowrap, and a div/span with flex: 1 & border-bottom. The underline element MUST contain a non-breaking space: `<div class="underline">&nbsp;</div>` to align perfectly on the text baseline.
     - ALWAYS apply overflow: hidden; to all cells/boxes.
     - NEVER use white-space: nowrap; on large cells. Title (Form Name): do NOT use nowrap.
 11. COMMON LAYOUT HINTS (CRITICAL STRUCTURES):
@@ -91,7 +92,8 @@ Requirements:
     - Outer Margin Safety (CRITICAL): The outermost template container (e.g., class="planner-wrapper") MUST have a consistent outer padding of `padding: 10px` (never large like 30px) to prevent wasting printable A4 area, since the system already wraps it in a page-container with ~40px margin.
     - List Row Alignment (CRITICAL): To-do list rows and list items MUST use `display: flex; align-items: center; gap: 10px; min-height: 35px;` to vertically center the checkbox/badge alongside the writing line and prevent overlapping.
     - Table Cell Width Alignment (CRITICAL): Data rows and column headers in grids must align exactly. Always use matching flex values (e.g., `flex: 1`, `flex: 2`) or percentage widths (`width: 30%`, `width: 70%`) on both header cells and data cells.
-    - Metadata Alignment: Place form metadata (like Date, Weather, Subject, Page) opposite the main title or section title using a flex container with `display: flex; justify-content: space-between; align-items: baseline;` to create a balanced, magazine-style layout.
+    - Metadata Alignment: Place form metadata (like Date, Weather, Subject, Page, Year, Month) opposite the main title or section title using a flex container with `display: flex; justify-content: space-between; align-items: flex-end;` to create a balanced, magazine-style layout. Avoid placing metadata inside a centered header banner (`class="header-block"`) as it causes layout wrapping and alignment bugs; keep them outside and aligned on the same horizontal row (opposite the title) or below it.
+      For the main page header, avoid using a background banner box (`class="header-block"`) for the title and metadata. Instead, use a clean, borderless flex row (`display: flex; justify-content: space-between; align-items: flex-end;`) to place the Title on the left and the Metadata fields on the right. This prevents title wrapping and border overlap bugs.
 No extra explanations, just code.
 """
 
