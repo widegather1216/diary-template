@@ -1,16 +1,18 @@
 import os
 import re
 import threading
-import uuid
 from flask import Flask, request, send_file, render_template, jsonify
 
 from core.generator import generate_layout_html
 from core.pdf_manager import generate_pdf, cleanup_pdf, get_pdf_path
+from core.task_manager import TaskManager
+from core.themes import THEME_CONFIG
+from core.prompts.layout_hints import LAYOUT_HINTS
 
 app = Flask(__name__)
 
-# Global in-memory task tracker
-tasks = {}
+# Thread-safe in-memory task manager with garbage collection
+task_manager = TaskManager()
 
 def bg_generate_task(task_id, data):
     title = data.get('title')
@@ -28,10 +30,7 @@ def bg_generate_task(task_id, data):
             orientation = "portrait"
 
     def progress_callback(status, message):
-        tasks[task_id] = {
-            'status': status,
-            'message': message
-        }
+        task_manager.update_task(task_id, status, message)
 
     try:
         master_html = generate_layout_html(
@@ -47,21 +46,26 @@ def bg_generate_task(task_id, data):
         progress_callback('rendering', '도면을 PDF 문서로 굽는 중입니다...')
         file_id, pdf_path = generate_pdf(master_html)
         
-        tasks[task_id] = {
-            'status': 'success',
+        task_manager.update_task(task_id, 'success', extra_fields={
             'file_id': file_id,
             'title': title,
             'page_size': page_size
-        }
+        })
     except Exception as e:
-        tasks[task_id] = {
-            'status': 'failed',
-            'message': f'생성 실패: {str(e)}'
-        }
+        task_manager.update_task(task_id, 'failed', message=f'생성 실패: {str(e)}')
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/api/config', methods=['GET'])
+def get_config():
+    # Unify configurations to avoid duplicate frontend data
+    category_mappings = {hint_id: hint_data["keywords"] for hint_id, hint_data in LAYOUT_HINTS.items()}
+    return jsonify({
+        'themes': THEME_CONFIG,
+        'category_mappings': category_mappings
+    })
 
 @app.route('/api/generate-pdf', methods=['POST'])
 def generate_pdf_route():
@@ -73,11 +77,7 @@ def generate_pdf_route():
     if not title:
         return jsonify({'error': 'Title is required'}), 400
 
-    task_id = str(uuid.uuid4())
-    tasks[task_id] = {
-        'status': 'pending',
-        'message': 'AI 작업 요청을 등록 중입니다...'
-    }
+    task_id = task_manager.create_task()
     
     # Start thread
     thread = threading.Thread(target=bg_generate_task, args=(task_id, data))
@@ -88,9 +88,9 @@ def generate_pdf_route():
 
 @app.route('/api/task-status/<task_id>', methods=['GET'])
 def get_task_status(task_id):
-    task = tasks.get(task_id)
+    task = task_manager.get_task(task_id)
     if not task:
-        return jsonify({'status': 'failed', 'message': '태스크를 찾을 수 없습니다.'}), 404
+        return jsonify({'status': 'failed', 'message': '태스크를 찾을 수 없거나 이미 만료되었습니다.'}), 404
     return jsonify(task)
 
 @app.route('/api/download-pdf/<file_id>', methods=['GET'])
