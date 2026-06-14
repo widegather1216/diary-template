@@ -13,7 +13,7 @@ def index():
 
 @app.route('/api/generate-pdf', methods=['POST'])
 def generate_pdf_route():
-    data = request.json
+    data = request.get_json(silent=True)
     if not data:
         return jsonify({'error': 'Invalid JSON request'}), 400
         
@@ -69,7 +69,7 @@ def download_pdf(file_id):
 
 @app.route('/api/cleanup-pdf', methods=['POST'])
 def cleanup_pdf_route():
-    data = request.json
+    data = request.get_json(silent=True)
     if request.data and not data:
         import json
         try:

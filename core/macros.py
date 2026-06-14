@@ -21,20 +21,34 @@ def process_repeat_macros(html_content):
             text = inner
             # Find and evaluate all {i+X} or {i:02d} or {i+X:02d} patterns
             def eval_expr(match):
-                expr = match.group(1).replace('i', str(i)).strip()
-                # If there's a format specifier like :02d
-                if ':' in expr:
-                    val_str, fmt = expr.split(':', 1)
-                    try:
-                        val = eval(val_str)
-                        return format(val, fmt)
-                    except:
-                        return match.group(0)
+                expr_str = match.group(1).strip()
+                fmt = None
+                if ':' in expr_str:
+                    expr, fmt = expr_str.split(':', 1)
                 else:
-                    try:
-                        return str(eval(expr))
-                    except:
-                        return match.group(0)
+                    expr = expr_str
+                
+                try:
+                    cleaned = expr.replace(" ", "")
+                    if cleaned == "i":
+                        val = i
+                    elif cleaned.isdigit():
+                        val = int(cleaned)
+                    else:
+                        match_op = re.match(r'^(i|\d+)([\+\-])(i|\d+)$', cleaned)
+                        if match_op:
+                            left, op, right = match_op.groups()
+                            l_val = i if left == 'i' else int(left)
+                            r_val = i if right == 'i' else int(right)
+                            val = l_val + r_val if op == '+' else l_val - r_val
+                        else:
+                            raise ValueError()
+                    
+                    if fmt:
+                        return format(val, fmt)
+                    return str(val)
+                except Exception:
+                    return match.group(0)
             
             # Match {i}, {i+1}, {8+i}, {i:02d}, {i+6:02d}, {8+i:02d}
             text = re.sub(r'\{([^}]*i[^}]*)\}', eval_expr, text)

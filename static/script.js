@@ -319,15 +319,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             previewIframe.classList.add('is-loaded');
-            if (warningBubble) {
-                warningBubble.classList.add('show-warning');
-                const warningMsgEl = document.getElementById('warning-message');
-                if (warningMsgEl) {
-                    typeWriter(warningMsgEl, "양식명만 입력 했을 때의 미리보기입니다. 상세 내용은 'PDF 생성하기' 버튼으로 완성하세요!", 30, () => {
-                        warningBubble.classList.add('draw-arrow');
-                    });
+            
+            // Wait 1.5 seconds for the preview rendering animations to complete
+            typewriterTimeout = setTimeout(() => {
+                // Safety check: if user cleared the input during the delay, do not show warning
+                if (!titleInput || !titleInput.value.trim()) return;
+                
+                if (warningBubble) {
+                    warningBubble.classList.add('show-warning');
+                    const warningMsgEl = document.getElementById('warning-message');
+                    if (warningMsgEl) {
+                        typeWriter(warningMsgEl, "양식명만 입력 했을 때의 미리보기입니다.\n원하는 방향으로 커스텀 해보세요!", 50, () => {
+                            warningBubble.classList.add('draw-arrow');
+                        });
+                    }
                 }
-            }
+            }, 1500);
         };
     }
 
