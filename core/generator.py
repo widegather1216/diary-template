@@ -1,4 +1,5 @@
 import json
+import time
 from pydantic import BaseModel
 from google.genai import types
 
@@ -8,7 +9,7 @@ from core.renderer import get_page_config, assemble_master_html
 
 class LayoutResponse(BaseModel):
     html: str
-
+# ... [lines 11-112 remain unchanged] ...
 def _request_initial_layout(client, title, description, page_size, orientation, style_theme, active_prompt, config, category=None):
     style_instructions = {
         'Minimal': "Use sans-serif fonts (e.g., 'Inter', 'Helvetica'), thin 1px borders, abundant whitespace, and completely remove any unnecessary decorations or shading. Keep it clean and modern.",
@@ -110,39 +111,76 @@ def _request_self_reflection(client, title, description, active_prompt, html_con
     except ValueError:
         return html_content # Fallback to first pass output if blocked
 
-def generate_layout_html(title, description, page_size, design_mode, orientation, style_theme='Minimal', category=None):
+def generate_layout_html(title, description, page_size, design_mode, orientation, style_theme='Minimal', category=None, progress_callback=None):
     """
-    Generates layout HTML using Gemini API with a 2-pass verification process.
+    Generates layout HTML using Gemini API with a 2-pass verification process and validation loop.
     Uses the modern google-genai client.
     """
+    from core.validator import validate_layout
+
     client = get_gemini_client()
     config = get_page_config(page_size, orientation)
     SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(title=title, description=description, category=category)
     
     active_prompt = GUIDE_SYSTEM_PROMPT if design_mode == 'guide' else SYSTEM_PROMPT
     
-    # Pass 1: Generate initial layout
-    html_content = _request_initial_layout(
-        client=client,
-        title=title,
-        description=description,
-        page_size=page_size,
-        orientation=orientation,
-        style_theme=style_theme,
-        active_prompt=active_prompt,
-        config=config,
-        category=category
-    )
+    current_description = description
+    last_html = ""
+    max_attempts = 3
     
-    # Pass 2: Self-Reflection
-    html_content = _request_self_reflection(
-        client=client,
-        title=title,
-        description=description,
-        active_prompt=active_prompt,
-        html_content=html_content,
-        design_mode=design_mode
-    )
-        
-    master_html = assemble_master_html(html_content, design_mode, page_size, orientation, style_theme)
+    for attempt in range(1, max_attempts + 1):
+        if progress_callback:
+            if attempt > 1:
+                progress_callback('retrying', f'AI가 실수를 감지하여 레이아웃을 자동 수정 중입니다... (재시도 {attempt}/{max_attempts})')
+            else:
+                progress_callback('generating', 'AI가 초안 레이아웃을 생성 중입니다...')
+        else:
+            print(f"[GENERATOR ⚙️] Attempt {attempt}/{max_attempts} starting...")
+
+        try:
+            # Pass 1: Generate initial layout
+            html_content = _request_initial_layout(
+                client=client,
+                title=title,
+                description=current_description,
+                page_size=page_size,
+                orientation=orientation,
+                style_theme=style_theme,
+                active_prompt=active_prompt,
+                config=config,
+                category=category
+            )
+            
+            # Pass 2: Self-Reflection
+            html_content = _request_self_reflection(
+                client=client,
+                title=title,
+                description=current_description,
+                active_prompt=active_prompt,
+                html_content=html_content,
+                design_mode=design_mode
+            )
+            
+            last_html = html_content
+            
+            # Validate layout
+            is_valid, reason = validate_layout(html_content, title, description, category, design_mode)
+            if is_valid:
+                if progress_callback:
+                    progress_callback('success', '레이아웃 생성 및 검증 완료!')
+                else:
+                    print("[GENERATOR ⚙️] Validation successful!")
+                break
+            else:
+                print(f"[GENERATOR ⚙️] Attempt {attempt} failed validation: {reason}")
+                # Build feedback for next attempt
+                feedback = f"Please fix the following layout error: {reason}"
+                current_description = description + f"\n\n[CRITICAL CORRECTION REQUIRED]\n{feedback}"
+        except Exception as e:
+            print(f"[GENERATOR ⚙️] Attempt {attempt} encountered error: {str(e)}")
+            if attempt == max_attempts:
+                raise e
+            time.sleep(1)
+            
+    master_html = assemble_master_html(last_html, design_mode, page_size, orientation, style_theme)
     return master_html

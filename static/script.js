@@ -434,16 +434,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(errorData.error || '알 수 없는 에러가 발생했습니다.');
             }
 
-            const data = await response.json();
-            currentFileId = data.file_id;
+            const resData = await response.json();
+            const taskId = resData.task_id;
 
-            const encodedTitle = encodeURIComponent(data.title);
-            downloadLink.href = `/api/download-pdf/${currentFileId}?title=${encodedTitle}&page_size=${data.page_size}`;
-            downloadLink.download = `${data.title}_${data.page_size}.pdf`;
-            
-            // 결과창으로 전환
-            interactiveCanvas.classList.add('hidden');
-            resultContainer.classList.remove('hidden');
+            // Poll task status
+            const pollInterval = setInterval(async () => {
+                try {
+                    const statusRes = await fetch(`/api/task-status/${taskId}`);
+                    if (!statusRes.ok) {
+                        clearInterval(pollInterval);
+                        throw new Error('태스크 상태를 가져오는 데 실패했습니다.');
+                    }
+                    const taskData = await statusRes.json();
+                    
+                    if (taskData.status === 'success') {
+                        clearInterval(pollInterval);
+                        currentFileId = taskData.file_id;
+
+                        const encodedTitle = encodeURIComponent(taskData.title);
+                        downloadLink.href = `/api/download-pdf/${currentFileId}?title=${encodedTitle}&page_size=${taskData.page_size}`;
+                        downloadLink.download = `${taskData.title}_${taskData.page_size}.pdf`;
+                        
+                        // 결과창으로 전환
+                        interactiveCanvas.classList.add('hidden');
+                        resultContainer.classList.remove('hidden');
+                        
+                        generateBtn.disabled = false;
+                        btnText.textContent = 'PDF 생성하기';
+                        document.body.classList.remove('is-generating-mode');
+                    } else if (taskData.status === 'failed') {
+                        clearInterval(pollInterval);
+                        throw new Error(taskData.message || '생성에 실패했습니다.');
+                    } else if (taskData.status === 'retrying') {
+                        // AI self-healing state
+                        canvasStatusText.innerHTML = `<span style="color: #e63946; font-weight: 600; text-align: center; display: block; line-height: 1.6; font-size: 1.1rem; animation: pulse 1.5s infinite;">⚠️ AI가 도면의 어긋남/실수를 감지했습니다!<br>완벽한 레이아웃을 위해 자동으로 도면을 수정 중입니다...</span>`;
+                        btnText.textContent = '자가 수정 중...';
+                    } else {
+                        // Normal progress
+                        canvasStatusText.textContent = taskData.message || '템플릿을 생성 중입니다...';
+                        btnText.textContent = '생성 중...';
+                    }
+                } catch (pollError) {
+                    clearInterval(pollInterval);
+                    console.error('Polling Error:', pollError);
+                    alert(`오류: ${pollError.message}`);
+                    canvasStatusText.classList.add('hidden');
+                    document.body.classList.remove('is-generating-mode');
+                    if (blueprintContainer && loadingAnimationContainer) {
+                        blueprintContainer.classList.remove('fly-away', 'hidden');
+                        loadingAnimationContainer.classList.add('hidden');
+                    }
+                    generateBtn.disabled = false;
+                    btnText.textContent = 'PDF 생성하기';
+                }
+            }, 1500);
 
         } catch (error) {
             console.error('Error:', error);
@@ -457,7 +501,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 blueprintContainer.classList.remove('fly-away', 'hidden');
                 loadingAnimationContainer.classList.add('hidden');
             }
-        } finally {
             generateBtn.disabled = false;
             btnText.textContent = 'PDF 생성하기';
         }
