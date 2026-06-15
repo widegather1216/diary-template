@@ -12,7 +12,7 @@ LAYOUT_HINTS = {
         "text": "    - [Weekly Planner]: Create a standard Weekly Planner layout based on orientation. For Portrait: a 2-column layout where the Left column has 4 horizontal blocks for MON, TUE, WED, THU, and the Right column has 3 horizontal blocks for FRI, SAT, SUN, and a Notes block at the bottom. Each day block has a bold day header on the left and blank writing lines on the right. For Landscape: a 7-column layout (MON to SUN) with equal widths, and a full-width 'Notes' area at the bottom (height: 150px, `class=\"lined-bg\"`). Do NOT use generic placeholders like 'DAY 1', 'DAY 2', or 'Day {i+1}'."
     },
     "daily": {
-        "keywords": ["daily", "데일리", "일간", "하루", "오늘", "일기장", "저널", "journal", "다이어리", "다이얼리", "스케줄러", "스케쥴러", "플래너", "플레너"],
+        "keywords": ["daily", "데일리", "일간", "하루", "오늘", "일기장", "저널", "journal", "다이어리", "다이얼리", "스케줄러", "스케쥴러", "플래너", "플레너", "일기"],
         "text": "    - [Daily Planner / Journal]: Create a standard 2-column Daily Planner layout: Left Column (flex: 1.2, border-right) is a Timetable/Schedule showing a vertical stack of hourly slots (e.g., 06:00 to 22:00 using repeat macro, where each slot uses `flex: 1` to stretch and fill the column's height, containing a time label and a blank line); Right Column (flex: 1) contains a 'Priorities / To-Do List' at the top (with 5-6 checkbox rows) and a 'Notes' area at the bottom (flex: 1, border-top, must use `class=\"lined-bg\"`)."
     },
     "yearly": {
@@ -40,7 +40,7 @@ LAYOUT_HINTS = {
         "text": "    - [Diet / Meal Planner]: Create columns or rows for Breakfast, Lunch, Dinner, and Snacks for each day of the week."
     },
     "reading_note": {
-        "keywords": ["reading note", "book review", "독서록", "독서 노트", "책 리뷰", "서평", "북리뷰", "책 기록", "독서 일기", "독후감", "독서 감상문"],
+        "keywords": ["reading note", "book review", "독서록", "독서 노트", "책 리뷰", "서평", "북리뷰", "책 기록", "독서 일기", "독후감", "독서 감상문", "독서", "책"],
         "text": "    - [Reading Note / Book Review]: Create a dedicated layout for reviewing a single book. Include a header with fields for Book Title, Author, Genre, Date Read, and Star Rating (e.g., 5 blank circles or stars). In the metadata section, these fields MUST either be stacked vertically (each field occupying a full-width row) or laid out in equal-width flex columns (e.g. using class=\"row\"/class=\"col\" with flex: 1). You MUST NOT place a flex-growing text field and the rating circles in the same flex row without wrapping them in equal-width flex columns, otherwise WeasyPrint will push the rating circles off the page. The rating circles (class=\"circle\") MUST have `flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ccc; display: inline-block; line-height: 18px; text-align: center; box-sizing: border-box;` and contain a non-breaking space `&nbsp;` to prevent oval squashing in WeasyPrint. The main body should feature structured sections for 'Key Summary', 'Memorable Quotes', and 'Personal Thoughts'. Independent content cards or sections (class=\"card\") MUST have all 4 borders closed (e.g., `border: 1px solid #ccc;` or similar depending on the design style) to form a complete box. To prevent vertical overflow and clipping of content cards in paged media, you MUST use compact paddings/margins (e.g., card margin-bottom: 10px to 15px, and card padding: 10px to 15px) and set the min-height of the lined backgrounds (lined-bg) to a smaller value like `60px` or `80px` (do NOT use height: 100%, use flex-grow: 1 instead)."
     },
     "reading_tracker": {
