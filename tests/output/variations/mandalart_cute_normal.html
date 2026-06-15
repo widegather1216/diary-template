@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; background-color: transparent; }
+
+body {
+    width: 100%; min-height: 1500px;
+    margin: 0 !important; padding: 0 !important;
+    background-color: white !important;
+    word-break: keep-all !important;
+    overflow-wrap: break-word !important;
+    
+}
+
+.page-container {
+    position: absolute !important;
+    top: 41.25px !important; 
+    left: 50% !important; 
+    margin-left: -350px !important;
+    width: 700px !important; 
+    height: 1040px !important;
+    display: flex; 
+    flex-direction: column;
+    overflow: hidden !important;
+}
+
+body { font-family: 'Quicksand', 'Nanum Pen Script', sans-serif; color: #3d348b; } h1, h2, h3, .title { font-family: 'Pacifico', 'Nanum Pen Script', cursive; color: #f15bb5; } .page-container { position: relative; } .page-container::before { content: ''; position: absolute; top: -8px; left: -8px; width: 12px; height: 12px; border-top: 1px solid #e0b1cb; border-left: 1px solid #e0b1cb; pointer-events: none; } .page-container::after { content: ''; position: absolute; bottom: -8px; right: -8px; width: 12px; height: 12px; border-bottom: 1px solid #e0b1cb; border-right: 1px solid #e0b1cb; pointer-events: none; } .header-block { background-color: #fff0f3; color: #d90429; padding: 6px 12px; border-radius: 20px; font-family: 'Pacifico', 'Nanum Pen Script', cursive; border: 1.5px dashed #e0b1cb; text-align: center; } .card { border: 2px dashed #e0b1cb; border-radius: 16px; padding: 15px; background-color: #fffbfc; box-shadow: 0 4px 10px rgba(224, 177, 203, 0.1); } .checkbox-circle { width: 16px; height: 16px; border: 2px solid #e0b1cb; border-radius: 50%; display: inline-block; background: #ffffff; vertical-align: middle; } .badge { background: #f15bb5; color: #ffffff; padding: 2px 8px; font-size: 0.75rem; border-radius: 10px; font-family: 'Quicksand', sans-serif; font-weight: 600; display: inline-block; }
+
+.lined-bg {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2720%27%20height%3D%2720%27%3E%3Crect%20x%3D%270%27%20y%3D%2719%27%20width%3D%2720%27%20height%3D%271%27%20fill%3D%27rgba%28224%2C%20177%2C%20203%2C%200.4%29%27/%3E%3C/svg%3E") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}
+.grid-bg {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2720%27%20height%3D%2720%27%3E%3Cpath%20d%3D%27M%2020%200%20L%2020%2020%20L%200%2020%27%20fill%3D%27none%27%20stroke%3D%27rgba%28224%2C%20177%2C%20203%2C%200.4%29%27%20stroke-width%3D%271%27/%3E%3C/svg%3E") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}
+.dot-bg {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2720%27%20height%3D%2720%27%3E%3Ccircle%20cx%3D%271%27%20cy%3D%271%27%20r%3D%271%27%20fill%3D%27rgba%28224%2C%20177%2C%20203%2C%200.4%29%27/%3E%3C/svg%3E") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap'); * { box-sizing: border-box; word-break: keep-all; overflow-wrap: normal; } body { font-family: 'Quicksand', sans-serif; line-height: 1.4; color: #e0b1cb; margin: 0; padding: 0; } .planner-wrapper { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 0; } .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; padding: 0 5px; } .title { font-size: 28px; font-weight: 700; color: #e0b1cb; } .mandalart-grid { display: flex; flex-direction: column; flex-grow: 1; border-top: 2px solid #e0b1cb; border-left: 2px solid #e0b1cb; } .row { display: flex; flex: 1; } .cell { display: flex; flex-direction: column; flex: 1; border-right: 2px solid #e0b1cb; border-bottom: 2px solid #e0b1cb; padding: 2px; } .sub-grid { display: flex; flex-direction: column; flex-grow: 1; border-top: 1px solid #ccc; border-left: 1px solid #ccc; } .sub-row { display: flex; flex: 1; } .sub-cell { flex: 0 0 33.333%; width: 33.333%; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #999; overflow: hidden; } 
+</style>
+</head>
+<body>
+    <div class="page-container">
+<div class="planner-wrapper"><div class="header"><div class="title">Mandalart</div></div><div class="mandalart-grid"><div class="row"><div class="cell"><div class="sub-grid"><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div></div></div><div class="cell"><div class="sub-grid"><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div></div></div><div class="cell"><div class="sub-grid"><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div></div></div></div><div class="row"><div class="cell"><div class="sub-grid"><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div></div></div><div class="cell"><div class="sub-grid"><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div></div></div><div class="cell"><div class="sub-grid"><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div></div></div></div><div class="row"><div class="cell"><div class="sub-grid"><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div></div></div><div class="cell"><div class="sub-grid"><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div></div></div><div class="cell"><div class="sub-grid"><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div><div class="sub-row"><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div><div class="sub-cell">&nbsp;</div></div></div></div></div></div></div>
+    </div>
+</body>
+</html>
