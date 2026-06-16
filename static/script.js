@@ -448,25 +448,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const resData = await response.json();
             const taskId = resData.task_id;
 
-            // Poll task status
-            const pollInterval = setInterval(async () => {
+            // Connect to SSE stream
+            const eventSource = new EventSource(`/api/task-stream/${taskId}`);
+
+            const handleStreamError = (err) => {
+                eventSource.close();
+                alert(`오류: ${err.message}`);
+                canvasStatusText.classList.add('hidden');
+                document.body.classList.remove('is-generating-mode');
+                if (blueprintContainer && loadingAnimationContainer) {
+                    blueprintContainer.classList.remove('fly-away', 'hidden');
+                    loadingAnimationContainer.classList.add('hidden');
+                }
+                generateBtn.disabled = false;
+                btnText.textContent = 'PDF 생성하기';
+            };
+
+            eventSource.onmessage = (event) => {
                 try {
-                    const statusRes = await fetch(`/api/task-status/${taskId}`);
-                    if (!statusRes.ok) {
-                        clearInterval(pollInterval);
-                        let errMsg = '태스크 상태를 가져오는 데 실패했습니다.';
-                        try {
-                            const errJson = await statusRes.json();
-                            if (errJson && errJson.message) {
-                                errMsg += ` (${errJson.message})`;
-                            }
-                        } catch (e) {}
-                        throw new Error(errMsg);
-                    }
-                    const taskData = await statusRes.json();
+                    const taskData = JSON.parse(event.data);
                     
                     if (taskData.status === 'success') {
-                        clearInterval(pollInterval);
+                        eventSource.close();
                         currentFileId = taskData.file_id;
 
                         const encodedTitle = encodeURIComponent(taskData.title);
@@ -481,8 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         btnText.textContent = 'PDF 생성하기';
                         document.body.classList.remove('is-generating-mode');
                     } else if (taskData.status === 'failed') {
-                        clearInterval(pollInterval);
-                        throw new Error(taskData.message || '생성에 실패했습니다.');
+                        handleStreamError(new Error(taskData.message || '생성에 실패했습니다.'));
                     } else if (taskData.status === 'retrying') {
                         // AI self-healing state
                         canvasStatusText.innerHTML = `<span style="color: #e63946; font-weight: 600; text-align: center; display: block; line-height: 1.6; font-size: 1.1rem; animation: pulse 1.5s infinite;">⚠️ AI가 도면의 어긋남/실수를 감지했습니다!<br>완벽한 레이아웃을 위해 자동으로 도면을 수정 중입니다...</span>`;
@@ -492,20 +494,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         canvasStatusText.textContent = taskData.message || '템플릿을 생성 중입니다...';
                         btnText.textContent = '생성 중...';
                     }
-                } catch (pollError) {
-                    clearInterval(pollInterval);
-                    console.error('Polling Error:', pollError);
-                    alert(`오류: ${pollError.message}`);
-                    canvasStatusText.classList.add('hidden');
-                    document.body.classList.remove('is-generating-mode');
-                    if (blueprintContainer && loadingAnimationContainer) {
-                        blueprintContainer.classList.remove('fly-away', 'hidden');
-                        loadingAnimationContainer.classList.add('hidden');
-                    }
-                    generateBtn.disabled = false;
-                    btnText.textContent = 'PDF 생성하기';
+                } catch (parseError) {
+                    handleStreamError(parseError);
                 }
-            }, 3000);
+            };
+
+            eventSource.onerror = (err) => {
+                console.error('SSE Error:', err);
+                handleStreamError(new Error('서버와의 실시간 연결이 끊어졌거나 에러가 발생했습니다.'));
+            };
 
         } catch (error) {
             console.error('Error:', error);

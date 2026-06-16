@@ -4,6 +4,8 @@ import time
 import uuid
 import tempfile
 import urllib.parse
+import urllib.request
+import ssl
 
 if sys.platform == "darwin":
     brew_lib_path = "/opt/homebrew/lib"
@@ -20,6 +22,9 @@ os.makedirs(TEMP_PDF_DIR, exist_ok=True)
 
 CACHE_DIR = os.path.join(tempfile.gettempdir(), 'weasyprint_url_cache')
 os.makedirs(CACHE_DIR, exist_ok=True)
+
+# Create unverified SSL context to bypass local certificate verification issues (e.g. on macOS)
+ssl_context = ssl._create_unverified_context()
 
 def cached_url_fetcher(url, timeout=15):
     # Only cache HTTP/HTTPS requests
@@ -44,31 +49,49 @@ def cached_url_fetcher(url, timeout=15):
                 mime_type = 'font/woff'
             elif '.ttf' in url:
                 mime_type = 'font/ttf'
-            elif '.css' in url:
+            elif 'css' in url:  # Match 'css' anywhere in the URL (e.g. css2?family=...)
                 mime_type = 'text/css'
             elif '.png' in url:
                 mime_type = 'image/png'
             elif '.jpg' in url or '.jpeg' in url:
                 mime_type = 'image/jpeg'
                 
-            return {
-                'string': content,
-                'mime_type': mime_type
-            }
+            res = {'string': content}
+            if mime_type:
+                res['mime_type'] = mime_type
+            return res
         except Exception as e:
             print(f"[WEASYPRINT CACHE ⚠️] 캐시 읽기 실패, 일반 다운로드: {e}")
             
     # Fetch from network on cache miss
     try:
         print(f"[WEASYPRINT CACHE 🌐] 캐시 미스, 다운로드 시작: {url}")
-        res = default_url_fetcher(url, timeout)
-        if res and 'string' in res:
-            with open(cache_path, 'wb') as f:
-                f.write(res['string'])
-        return res
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+        )
+        with urllib.request.urlopen(req, timeout=timeout, context=ssl_context) as response:
+            content = response.read()
+            
+        with open(cache_path, 'wb') as f:
+            f.write(content)
+            
+        mime_type = response.headers.get('Content-Type')
+        return {
+            'string': content,
+            'mime_type': mime_type
+        }
     except Exception as e:
-        print(f"[WEASYPRINT CACHE ❌] 다운로드 실패: {e}")
-        raise e
+        print(f"[WEASYPRINT CACHE ❌] 우회 다운로드 실패 ({e}), 기본 페처로 시도합니다.")
+        try:
+            res = default_url_fetcher(url, timeout)
+            if res and 'string' in res:
+                with open(cache_path, 'wb') as f:
+                    f.write(res['string'])
+            return res
+        except Exception as fallback_err:
+            print(f"[WEASYPRINT CACHE ❌] 기본 페처 다운로드 최종 실패: {fallback_err}")
+            raise fallback_err
 
 def cleanup_old_pdfs(max_age_hours=1):
     """

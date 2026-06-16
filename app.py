@@ -1,7 +1,9 @@
 import os
 import re
 import threading
-from flask import Flask, request, send_file, render_template, jsonify
+import json
+import time
+from flask import Flask, request, send_file, render_template, jsonify, Response
 
 from core.generator import generate_layout_html
 from core.pdf_manager import generate_pdf, cleanup_pdf, get_pdf_path
@@ -92,6 +94,35 @@ def get_task_status(task_id):
     if not task:
         return jsonify({'status': 'failed', 'message': '태스크를 찾을 수 없거나 이미 만료되었습니다.'}), 404
     return jsonify(task)
+
+@app.route('/api/task-stream/<task_id>', methods=['GET'])
+def task_stream(task_id):
+    def event_generator():
+        last_status = None
+        last_message = None
+        
+        while True:
+            task = task_manager.get_task(task_id)
+            if not task:
+                yield f"data: {json.dumps({'status': 'failed', 'message': '태스크를 찾을 수 없거나 이미 만료되었습니다.'}, ensure_ascii=False)}\n\n"
+                break
+                
+            current_status = task.get('status')
+            current_message = task.get('message')
+            
+            # Send message when status or message changes
+            if current_status != last_status or current_message != last_message:
+                yield f"data: {json.dumps(task, ensure_ascii=False)}\n\n"
+                last_status = current_status
+                last_message = current_message
+                
+            # Exit loop if task has completed or failed
+            if current_status in ('success', 'failed'):
+                break
+                
+            time.sleep(0.5)
+            
+    return Response(event_generator(), mimetype='text/event-stream')
 
 @app.route('/api/download-pdf/<file_id>', methods=['GET'])
 def download_pdf(file_id):
