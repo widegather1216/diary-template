@@ -52,4 +52,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860/').read()" || exit 1
 
 # 프로덕션 환경 권장: gunicorn 실행 (생성 시간이 길어질 수 있으므로 타임아웃 120초 부여)
-CMD ["gunicorn", "-b", "0.0.0.0:7860", "-w", "2", "--timeout", "120", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:7860", "-w", "1", "--threads", "4", "--timeout", "120", "app:app"]

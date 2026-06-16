@@ -3,6 +3,7 @@ import sys
 import time
 import uuid
 import tempfile
+import urllib.parse
 
 if sys.platform == "darwin":
     brew_lib_path = "/opt/homebrew/lib"
@@ -12,10 +13,62 @@ if sys.platform == "darwin":
             os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = f"{brew_lib_path}:{dyld_path}".strip(":")
             os.execve(sys.executable, [sys.executable] + sys.argv, os.environ)
 
-from weasyprint import HTML
+from weasyprint import HTML, default_url_fetcher
 
 TEMP_PDF_DIR = os.path.join(tempfile.gettempdir(), 'formweaver_pdfs')
 os.makedirs(TEMP_PDF_DIR, exist_ok=True)
+
+CACHE_DIR = os.path.join(tempfile.gettempdir(), 'weasyprint_url_cache')
+os.makedirs(CACHE_DIR, exist_ok=True)
+
+def cached_url_fetcher(url, timeout=15):
+    # Only cache HTTP/HTTPS requests
+    if not url.startswith('http://') and not url.startswith('https://'):
+        return default_url_fetcher(url, timeout)
+        
+    # Generate a safe local filename based on the URL
+    safe_filename = urllib.parse.quote_plus(url)
+    cache_path = os.path.join(CACHE_DIR, safe_filename)
+    
+    # Check if cached file exists
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, 'rb') as f:
+                content = f.read()
+            
+            # Determine mime_type
+            mime_type = None
+            if '.woff2' in url:
+                mime_type = 'font/woff2'
+            elif '.woff' in url:
+                mime_type = 'font/woff'
+            elif '.ttf' in url:
+                mime_type = 'font/ttf'
+            elif '.css' in url:
+                mime_type = 'text/css'
+            elif '.png' in url:
+                mime_type = 'image/png'
+            elif '.jpg' in url or '.jpeg' in url:
+                mime_type = 'image/jpeg'
+                
+            return {
+                'string': content,
+                'mime_type': mime_type
+            }
+        except Exception as e:
+            print(f"[WEASYPRINT CACHE ⚠️] 캐시 읽기 실패, 일반 다운로드: {e}")
+            
+    # Fetch from network on cache miss
+    try:
+        print(f"[WEASYPRINT CACHE 🌐] 캐시 미스, 다운로드 시작: {url}")
+        res = default_url_fetcher(url, timeout)
+        if res and 'string' in res:
+            with open(cache_path, 'wb') as f:
+                f.write(res['string'])
+        return res
+    except Exception as e:
+        print(f"[WEASYPRINT CACHE ❌] 다운로드 실패: {e}")
+        raise e
 
 def cleanup_old_pdfs(max_age_hours=1):
     """
@@ -41,17 +94,16 @@ def cleanup_old_pdfs(max_age_hours=1):
 
 def generate_pdf(master_html):
     """
-    Generates a PDF from the provided master_html using WeasyPrint.
+    Generates a PDF from the provided master_html using WeasyPrint with cached_url_fetcher.
     Returns the file_id of the generated PDF.
     """
-    # 새로운 PDF 생성 전에 오래된 찌꺼기 파일들 정리 (예: 1시간 이상 된 파일)
     cleanup_old_pdfs(max_age_hours=1)
     
     file_id = uuid.uuid4().hex
     pdf_path = os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
     
     print(f"[TRACKING 🔍] 새로운 임시 PDF 파일 생성 시작: {pdf_path}")
-    HTML(string=master_html).write_pdf(pdf_path)
+    HTML(string=master_html, url_fetcher=cached_url_fetcher).write_pdf(pdf_path)
     print(f"[TRACKING ✅] 임시 PDF 파일 생성 완료: {pdf_path}")
     
     return file_id, pdf_path

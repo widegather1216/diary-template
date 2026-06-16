@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     generateBtn.disabled = false;
                     btnText.textContent = 'PDF 생성하기';
                 }
-            }, 1500);
+            }, 3000);
 
         } catch (error) {
             console.error('Error:', error);
