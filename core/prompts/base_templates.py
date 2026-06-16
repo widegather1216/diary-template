@@ -7,7 +7,7 @@ Requirements:
 2. LANGUAGE & CONTENT (CRITICAL): TRANSLATE all text/placeholders and the main title (even if the Form Title parameter is provided in Korean) to English. Output ONLY actual planner content. No hints/parentheses.
 3. CANVAS CONSTRAINTS (CRITICAL): Output fits inside a container with dimensions specified in user parameters. Do NOT write <html>, <body>, or @page. Write ONLY inner HTML & <style>. Outer wrapper must have padding: 0. Outer wrapper must fill container dynamically (width: 100%; height: 100%; or flex). DO NOT hardcode absolute px width/height on outermost wrapper.
 4. STRUCTURE & SAFETIES (CRITICAL):
-   - Use Flexbox. Do NOT use CSS Grid or position: absolute for layout.
+   - Use Flexbox. Do NOT use CSS Grid or position: absolute for layout. Exception: For complex grid layouts like Mandalart (9x9 nested grids), you MUST use HTML <table> to ensure layout calculations do not freeze or crash the server's layout engine.
    - ALWAYS set a reasonable, explicit line-height (e.g., `line-height: 1.3;` or `line-height: 1.4;`) globally or on the body, and NEVER use line-height smaller than font-size. Cursive/handwriting fonts (like 'Patrick Hand' or 'Nanum Pen Script') have very large default font-metrics, which causes WeasyPrint to evaluate their default line-height as 50px+ and clip content if not explicitly set.
    - ALWAYS include * {{ word-break: keep-all; overflow-wrap: normal; }} in <style> (wrap strictly at spaces, not mid-word).
    - Vertically center text in boxes: display: flex; align-items: center; justify-content: center;.
@@ -58,7 +58,7 @@ The user wants a "Hand-drawing Blueprint" (a reference sketch) to copy manually.
 Requirements:
 1. DESIGN (CRITICAL): Purely structural hand-drawn look. No decorations, cursive fonts, or double borders. Use only thin, single solid lines for grids. Use 'Patrick Hand' font.
 2. CANVAS & GRID (CRITICAL): Container dimensions specified in user parameters. System draws a 20px dot grid background. Do NOT write <body> or @page. Write ONLY inner HTML & <style>. Outer wrapper must have padding: 0. Outer wrapper must fill container dynamically (width: 100%; height: 100%;). DO NOT hardcode absolute px width/height.
-3. UNIDIRECTIONAL BORDER FLEXBOX (CRITICAL): Do NOT use <table>, CSS Grid, or standard borders. To prevent 2px borders, use display: flex and strict border rules:
+3. UNIDIRECTIONAL BORDER FLEXBOX (CRITICAL): Do NOT use <table>, CSS Grid, or standard borders. To prevent 2px borders, use display: flex and strict border rules. Exception: For complex grid layouts like Mandalart (9x9 nested grids), you MUST use HTML <table> to ensure layout calculations do not freeze or crash the server's layout engine.
    - Outermost wrapper: border-top: 1px solid #333; border-left: 1px solid #333; box-sizing: border-box; width: 100%;
    - Inner boxes, rows, cells: border-bottom: 1px solid #333; border-right: 1px solid #333; box-sizing: border-box;
    - NEVER use border: 1px solid #333; on anything. NEVER use border-top/left on inner children. Exception: Independent, non-adjacent content cards or modules (e.g. class="card", Key Summary, Memorable Quotes, Personal Thoughts) that are spaced out and do not share adjacent edges with other cells MUST have all 4 borders closed (e.g., style them with `border: 1px solid #333;`) to form a complete box.

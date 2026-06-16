@@ -125,8 +125,11 @@ def generate_pdf(master_html):
     file_id = uuid.uuid4().hex
     pdf_path = os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
     
+    # WeasyPrint가 static/fonts/... 로컬 경로를 인식할 수 있도록 base_url을 프로젝트 루트로 설정
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    
     print(f"[TRACKING 🔍] 새로운 임시 PDF 파일 생성 시작: {pdf_path}")
-    HTML(string=master_html, url_fetcher=cached_url_fetcher).write_pdf(pdf_path)
+    HTML(string=master_html, base_url=project_root, url_fetcher=cached_url_fetcher).write_pdf(pdf_path)
     print(f"[TRACKING ✅] 임시 PDF 파일 생성 완료: {pdf_path}")
     
     return file_id, pdf_path
