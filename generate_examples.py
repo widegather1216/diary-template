@@ -12,7 +12,8 @@ from core.pdf_manager import generate_pdf
 examples = [
     {"style": "Minimal", "title": "Daily Planner", "filename": "style_minimal.png"},
     {"style": "Cute", "title": "Gratitude Journal", "filename": "style_cute.png"},
-    {"style": "Editorial", "title": "Reading Log", "filename": "style_editorial.png"}
+    {"style": "Editorial", "title": "Reading Log", "filename": "style_editorial.png"},
+    {"style": "Minimal", "title": "Mandalart Plan", "filename": "style_mandalart.png"}
 ]
 
 out_dir = os.path.join(project_root, 'static', 'images')

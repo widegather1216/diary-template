@@ -23,6 +23,7 @@ def bg_generate_task(task_id, data):
     design_mode = data.get('designMode', 'print')
     orientation = data.get('orientation')
     style_theme = data.get('styleTheme', 'Minimal')
+    category = data.get('category')
     
     if not orientation:
         combined_text = f"{title} {description}".lower()
@@ -42,6 +43,7 @@ def bg_generate_task(task_id, data):
             design_mode=design_mode,
             orientation=orientation,
             style_theme=style_theme,
+            category=category,
             progress_callback=progress_callback
         )
         

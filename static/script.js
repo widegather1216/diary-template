@@ -432,12 +432,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            const category = getLayoutCategory(title);
             const response = await fetch('/api/generate-pdf', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ title, description, pageSize, designMode, styleTheme })
+                body: JSON.stringify({ title, description, pageSize, designMode, styleTheme, category })
             });
 
             if (!response.ok) {
