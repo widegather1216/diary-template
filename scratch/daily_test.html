@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+@font-face {
+    font-family: 'Inter';
+    src: url('static/fonts/Inter-Variable.ttf') format('truetype');
+}
+</style>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; background-color: transparent; }
+
+body {
+    width: 100%; min-height: 1500px;
+    margin: 0 !important; padding: 0 !important;
+    background-color: white !important;
+    word-break: keep-all !important;
+    overflow-wrap: break-word !important;
+    
+}
+
+.page-container {
+    position: absolute !important;
+    top: 41.25px !important; 
+    left: 50% !important; 
+    margin-left: -350px !important;
+    width: 700px !important; 
+    height: 1040px !important;
+    display: flex; 
+    flex-direction: column;
+    overflow: hidden !important;
+}
+
+body { font-family: 'Inter', sans-serif; color: #2b2d42; } h1, h2, h3, .title { font-weight: 800; letter-spacing: -0.03em; color: #1d3557; } .page-container { position: relative; } .page-container::before { content: ''; position: absolute; top: -8px; left: -8px; width: 12px; height: 12px; border-top: 1px solid #8d99ae; border-left: 1px solid #8d99ae; pointer-events: none; } .page-container::after { content: ''; position: absolute; bottom: -8px; right: -8px; width: 12px; height: 12px; border-bottom: 1px solid #8d99ae; border-right: 1px solid #8d99ae; pointer-events: none; } .header-block { background-color: #f1f5f9; color: #1e293b; padding: 6px 12px; border-radius: 4px; font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.02em; text-align: center; } .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.02); } .checkbox-circle { width: 14px; height: 14px; border: 1.2px solid #cbd5e1; border-radius: 50%; display: inline-block; vertical-align: middle; } .badge { background: #e2e8f0; color: #475569; padding: 2px 6px; font-size: 0.7rem; border-radius: 4px; font-family: 'Inter', sans-serif; font-weight: 600; display: inline-block; }
+
+.lined-bg {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2720%27%20height%3D%2720%27%3E%3Crect%20x%3D%270%27%20y%3D%2719%27%20width%3D%2720%27%20height%3D%271%27%20fill%3D%27rgba%28141%2C%20153%2C%20174%2C%200.25%29%27/%3E%3C/svg%3E") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}
+.grid-bg {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2720%27%20height%3D%2720%27%3E%3Cpath%20d%3D%27M%2020%200%20L%2020%2020%20L%200%2020%27%20fill%3D%27none%27%20stroke%3D%27rgba%28141%2C%20153%2C%20174%2C%200.25%29%27%20stroke-width%3D%271%27/%3E%3C/svg%3E") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}
+.dot-bg {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2720%27%20height%3D%2720%27%3E%3Ccircle%20cx%3D%271%27%20cy%3D%271%27%20r%3D%271%27%20fill%3D%27rgba%28141%2C%20153%2C%20174%2C%200.25%29%27/%3E%3C/svg%3E") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap'); * { box-sizing: border-box; word-break: keep-all; overflow-wrap: normal; } body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; line-height: 1.4; color: #8d99ae; } .planner-wrapper { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 20px; } .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; } .title { font-size: 24px; font-weight: 600; white-space: nowrap; flex-shrink: 0; } .metadata { display: flex; gap: 15px; align-items: baseline; font-size: 14px; min-width: 0; flex-shrink: 1; } .meta-item { display: flex; align-items: baseline; gap: 5px; } .underline { border-bottom: 1px solid #8d99ae; min-width: 80px; flex: 1; } .main-content { display: flex; gap: 20px; flex-grow: 1; min-height: 0; } .col { display: flex; flex-direction: column; flex: 1; min-width: 0; } .section-title { font-size: 16px; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #8d99ae; padding-bottom: 5px; } .timetable-row { display: flex; align-items: center; flex: 1; border-right: 1px solid #ccc; border-bottom: 1px solid #eee; min-height: 30px; } .time-label { width: 50px; font-size: 12px; color: #666; flex-shrink: 0; display: flex; align-items: center; justify-content: center; } .todo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; } .checkbox-circle { width: 16px; height: 16px; border: 1px solid #8d99ae; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; } .lined-bg { flex-grow: 1; border: 1px solid #ccc; background-image: repeating-linear-gradient(transparent, transparent 24px, #eee 25px); padding: 5px; min-height: 100px; }
+</style>
+</head>
+<body>
+    <div class="page-container">
+<div class="planner-wrapper"><div class="header"><h1 class="title">Daily Planner</h1><div class="metadata"><div class="meta-item">Date:<div class="underline">&nbsp;</div></div><div class="meta-item">Weather:<div class="underline">&nbsp;</div></div></div></div><div class="main-content"><div class="col" style="border-left: 1px solid #ccc; border-top: 1px solid #ccc;"><div class="section-title">Schedule</div><div class="timetable-row"><div class="time-label">06:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">07:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">08:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">09:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">10:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">11:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">12:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">13:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">14:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">15:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">16:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">17:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">18:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">19:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">20:00</div><div style="flex: 1;">&nbsp;</div></div><div class="timetable-row"><div class="time-label">21:00</div><div style="flex: 1;">&nbsp;</div></div></div><div class="col"><div class="section-title">Priorities</div><div class="todo-row"><div class="checkbox-circle">&nbsp;</div><div class="underline">&nbsp;</div></div><div class="todo-row"><div class="checkbox-circle">&nbsp;</div><div class="underline">&nbsp;</div></div><div class="todo-row"><div class="checkbox-circle">&nbsp;</div><div class="underline">&nbsp;</div></div><div class="todo-row"><div class="checkbox-circle">&nbsp;</div><div class="underline">&nbsp;</div></div><div class="todo-row"><div class="checkbox-circle">&nbsp;</div><div class="underline">&nbsp;</div></div><div class="todo-row"><div class="checkbox-circle">&nbsp;</div><div class="underline">&nbsp;</div></div><div class="section-title" style="margin-top: 20px;">Notes</div><div class="lined-bg">&nbsp;</div></div></div></div>
+    </div>
+</body>
+</html>
