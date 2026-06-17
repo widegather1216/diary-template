@@ -13,7 +13,7 @@ LAYOUT_HINTS = {
     },
     "daily": {
         "keywords": ["daily", "데일리", "일간", "하루", "오늘", "일기장", "저널", "journal", "다이어리", "다이얼리", "일기"],
-        "text": "    - [Daily Planner / 데일리 플래너 / 데일리 플레너 / 일간 스케줄러 / 하루 계획표]: Create a standard 2-column Daily Planner layout: Left Column (flex: 1.2, border-right) is a Timetable/Schedule showing a vertical stack of hourly slots (e.g., 06:00 to 22:00 using repeat macro, where each slot uses `flex: 1` to stretch and fill the column's height, containing a time label and a blank line); Right Column (flex: 1) contains a 'Priorities / To-Do List' at the top (with 5-6 checkbox rows) and a 'Notes' area at the bottom (flex: 1, border-top, must use `class=\"lined-bg\"`)."
+        "text": "    - [Daily Planner / 데일리 플래너 / 데일리 플레너 / 일간 스케줄러 / 하루 계획표]: Create a standard 2-column Daily Planner layout: Ensure the main 2-column wrapper has ALL 4 outer borders explicitly closed (e.g., `border: 1px solid <color>`). Left Column (flex: 1.2, border-right) is a Timetable/Schedule showing a vertical stack of hourly slots (e.g., 06:00 to 22:00 using repeat macro, where each slot uses `flex: 1` to stretch and fill the column's height, containing a time label and a blank line); Right Column (flex: 1) contains a 'Priorities / To-Do List' at the top (with 5-6 checkbox rows) and a 'Notes' area at the bottom (flex: 1, must use `class=\"lined-bg\"`). CRITICAL: To prevent double borders, use only a single border line between the To-Do list and Notes (e.g., if you add `border-top` to Notes, ensure the To-Do list does not have a `border-bottom` on its container or last item)."
     },
     "yearly": {
         "keywords": ["yearly", "연간", "연간 계획", "1년", "이어리", "year", "신년 계획", "새해 계획"],
