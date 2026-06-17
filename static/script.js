@@ -253,6 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
             top: 20px !important;
             margin-top: 0 !important;
         }
+        /* Chrome iframe scale 버그 방지용 (서브픽셀 테두리 실종 방지) */
+        table { border-collapse: separate !important; border-spacing: 0 !important; }
+
         /* 모든 요소 초기 투명화 및 순차 페이드인 */
         div, section, table, tr, td, th, span, p, h1, h2, h3, h4, h5, h6, li, a, img {
             animation: fadeInElement 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
