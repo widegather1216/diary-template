@@ -167,7 +167,7 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
             is_valid, reason = validate_layout(html_content, title, description, category, design_mode)
             if is_valid:
                 if progress_callback:
-                    progress_callback('success', '레이아웃 생성 및 검증 완료!')
+                    progress_callback('layout_complete', '레이아웃 생성 및 검증 완료!')
                 else:
                     print("[GENERATOR ⚙️] Validation successful!")
                 break

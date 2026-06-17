@@ -470,7 +470,7 @@ body.is-generating-mode .sketch-paper { animation: pulsePaper 3s ease-in-out inf
 .style-preview img { width: 90%; max-width: 18rem; border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.03); }
 
 .page-turn-btn {
-    position: absolute; bottom: 1.5rem; background: none; border: none; font-family: 'Inter', sans-serif;
+    position: absolute; bottom: 0.8rem; background: none; border: none; font-family: 'Inter', sans-serif;
     color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; padding: 0.5rem;
     cursor: pointer; transition: color 0.3s;
     -webkit-backface-visibility: hidden; backface-visibility: hidden;
