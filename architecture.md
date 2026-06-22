@@ -107,7 +107,7 @@ diary-template/
 ### 2.1. 프론트엔드 및 진입점 (`static/`, `templates/`, `app.py`)
 
 - **`templates/index.html` & `static/script.js`**:
-  - 단일 페이지 애플리케이션(SPA) 형태로 사용자가 플래너의 종류, 용지 크기(A4, A5, B5), 디자인 모드(Print/Guide), 스타일 테마(Minimal, Cute, Editorial)를 선택합니다.
+  - 단일 페이지 애플리케이션(SPA) 형태로 사용자가 플래너의 종류, 용지 크기(A4, A5), 디자인 모드(Print/Guide), 스타일 테마(Minimal, Cute, Editorial)를 선택합니다.
 - **`app.py`**:
   - Flask 앱의 진입점으로 핵심 REST API를 정의합니다.
   - `/api/generate-pdf`: 폼 데이터를 JSON으로 받아 백그라운드 태스크로 `generate_process`를 실행하고 템플릿을 생성합니다.

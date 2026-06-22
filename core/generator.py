@@ -1,7 +1,9 @@
 import json
 import time
+import re
 from pydantic import BaseModel
 from google.genai import types
+from google.genai.errors import ClientError
 
 from core.config import MODEL_NAME, MAX_GENERATION_ATTEMPTS, GENERATION_TEMPERATURE, GENERATION_MAX_OUTPUT_TOKENS
 from core.model_config import get_gemini_client
@@ -38,7 +40,56 @@ def _parse_response(response, fallback=None):
             raise Exception(f"생성 중단됨 (사유: {finish_reason})")
 
 
-def _request_initial_layout(client, title, description, page_size, orientation, style_theme, active_prompt, config, category=None):
+def _generate_content_with_retry(client, contents, config, progress_callback=None):
+    """Wraps Gemini API content generation with retry logic for 429 Rate Limits."""
+    max_rate_limit_retries = 3
+    for attempt in range(1, max_rate_limit_retries + 1):
+        try:
+            return client.models.generate_content(
+                model=MODEL_NAME,
+                contents=contents,
+                config=config,
+            )
+        except ClientError as e:
+            if getattr(e, 'code', None) == 429:
+                delay = 10.0  # Fallback wait time
+                
+                # Try parsing structural retryDelay from response details
+                if hasattr(e, 'details') and e.details:
+                    for detail in e.details:
+                        if isinstance(detail, dict) and detail.get('@type') == 'type.googleapis.com/google.rpc.RetryInfo':
+                            delay_str = detail.get('retryDelay', '')
+                            if delay_str.endswith('s'):
+                                try:
+                                    delay = float(delay_str[:-1])
+                                except ValueError:
+                                    pass
+                                    
+                # Fallback to regex on message string
+                if delay == 10.0:
+                    message = getattr(e, 'message', '') or str(e)
+                    match = re.search(r"retry in (\d+(?:\.\d+)?)s", message, re.IGNORECASE)
+                    if match:
+                        delay = float(match.group(1))
+                
+                # Add a 2-second buffer to the delay
+                wait_time = delay + 2.0
+                
+                if attempt == max_rate_limit_retries:
+                    print(f"[RATE LIMIT ❌] 최대 API 재시도 횟수 초과. 실패 처리합니다.")
+                    raise e
+                
+                msg = f"API 호출 한도가 초과되었습니다. {wait_time:.1f}초 후 자동으로 재시도합니다... (대기 중)"
+                print(f"[RATE LIMIT ⚠️] {msg}")
+                if progress_callback:
+                    progress_callback('rate_limited', msg)
+                
+                time.sleep(wait_time)
+            else:
+                raise e
+
+
+def _request_initial_layout(client, title, description, page_size, orientation, style_theme, active_prompt, config, category=None, progress_callback=None):
     style_instructions = {
         'Minimal': "Use sans-serif fonts (e.g., 'Inter', 'Helvetica'), thin 1px borders, abundant whitespace, and completely remove any unnecessary decorations or shading. Keep it clean and modern.",
         'Cute': "Use bubbly or hand-drawn fonts (e.g., 'Quicksand', 'Architects Daughter'), rounded borders (e.g., `border-radius: 12px`), dotted/dashed lines, and soft aesthetics. It should look friendly, cozy, and cute like a journaling notebook.",
@@ -76,15 +127,16 @@ def _request_initial_layout(client, title, description, page_size, orientation, 
     Generate the inner HTML and `<style>` according to the parameters and description above.
     """
     
-    response = client.models.generate_content(
-        model=MODEL_NAME,
+    response = _generate_content_with_retry(
+        client=client,
         contents=[active_prompt, prompt],
         config=_LAYOUT_GENERATION_CONFIG,
+        progress_callback=progress_callback
     )
     
     return _parse_response(response)
-
-def _request_self_reflection(client, title, description, active_prompt, html_content, design_mode):
+ 
+def _request_self_reflection(client, title, description, active_prompt, html_content, design_mode, progress_callback=None):
     print("[TRACKING 🔍] 2차 검증 (Self-Reflection) 요청 중...")
     
     dynamic_rules = ""
@@ -104,14 +156,15 @@ def _request_self_reflection(client, title, description, active_prompt, html_con
         html_content=html_content
     )
     
-    review_response = client.models.generate_content(
-        model=MODEL_NAME,
+    review_response = _generate_content_with_retry(
+        client=client,
         contents=[active_prompt, review_prompt],
         config=_LAYOUT_GENERATION_CONFIG,
+        progress_callback=progress_callback
     )
     
     return _parse_response(review_response, fallback=html_content)
-
+ 
 def _build_generation_context(title, description, page_size, design_mode, orientation, style_theme, category):
     """Build and return the generation context: (client, config, active_prompt)."""
     client = get_gemini_client()
@@ -119,15 +172,15 @@ def _build_generation_context(title, description, page_size, design_mode, orient
     SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(title=title, description=description, category=category)
     active_prompt = GUIDE_SYSTEM_PROMPT if design_mode == 'guide' else SYSTEM_PROMPT
     return client, config, active_prompt
-
-
+ 
+ 
 def generate_layout_html(title, description, page_size, design_mode, orientation, style_theme='Minimal', category=None, progress_callback=None):
     """
     Generates layout HTML using Gemini API with a 2-pass verification process and validation loop.
     Uses the modern google-genai client.
     """
     from core.validator import validate_layout
-
+ 
     client, config, active_prompt = _build_generation_context(
         title, description, page_size, design_mode, orientation, style_theme, category
     )
@@ -144,7 +197,7 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
                 progress_callback('generating', 'AI가 초안 레이아웃을 생성 중입니다...')
         else:
             print(f"[GENERATOR ⚙️] Attempt {attempt}/{max_attempts} starting...")
-
+ 
         try:
             # Pass 1: Generate initial layout
             html_content = _request_initial_layout(
@@ -156,7 +209,8 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
                 style_theme=style_theme,
                 active_prompt=active_prompt,
                 config=config,
-                category=category
+                category=category,
+                progress_callback=progress_callback
             )
             
             # Pass 2: Self-Reflection
@@ -166,7 +220,8 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
                 description=current_description,
                 active_prompt=active_prompt,
                 html_content=html_content,
-                design_mode=design_mode
+                design_mode=design_mode,
+                progress_callback=progress_callback
             )
             
             last_html = html_content

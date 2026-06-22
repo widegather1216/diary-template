@@ -36,4 +36,19 @@ def validate_layout(html_content, title, description, category, design_mode):
     if re.search(r'\((?:Draw|Write|Add|Insert|Put)\s+[^)]+\)', html_content, re.IGNORECASE):
         return False, "Layout contains instructional text in parentheses (e.g. '(Draw lines)'), which is forbidden."
 
+    # 7. Check for forbidden width: 100% in inline styles
+    if re.search(r'style\s*=\s*[\'"][^\'"]*width\s*:\s*100%[^\'"]*[\'"]', html_content, re.IGNORECASE):
+        return False, "Layout contains inline style with width: 100% which is forbidden."
+
+    # 8. Check for forbidden width: 100% in custom CSS selectors
+    style_blocks = re.findall(r'<style[^>]*>(.*?)</style>', html_content, re.DOTALL | re.IGNORECASE)
+    for block in style_blocks:
+        rules = re.findall(r'([^{]+)\s*\{([^}]+)\}', block)
+        for selector, properties in rules:
+            if re.search(r'width\s*:\s*100%', properties, re.IGNORECASE):
+                selectors = [s.strip() for s in selector.split(',')]
+                for sel in selectors:
+                    if sel not in ('.planner-wrapper', '.page-container'):
+                        return False, f"Forbidden selector '{sel}' using width: 100%."
+
     return True, ""
