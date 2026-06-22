@@ -1,6 +1,9 @@
 # core/macros.py
 import re
 
+# Pre-compiled regex for evaluating arithmetic expressions in repeat macros
+_OP_RE = re.compile(r'^(i|\d+)([\+\-])(i|\d+)$')
+
 def process_repeat_macros(html_content):
     """
     Recursively finds <repeat count="N">...</repeat> tags and multiplies the inner HTML N times.
@@ -35,7 +38,7 @@ def process_repeat_macros(html_content):
                     elif cleaned.isdigit():
                         val = int(cleaned)
                     else:
-                        match_op = re.match(r'^(i|\d+)([\+\-])(i|\d+)$', cleaned)
+                        match_op = _OP_RE.match(cleaned)
                         if match_op:
                             left, op, right = match_op.groups()
                             l_val = i if left == 'i' else int(left)

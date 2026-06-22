@@ -5,6 +5,7 @@ import uuid
 import tempfile
 import urllib.parse
 import urllib.request
+import mimetypes
 import ssl
 
 if sys.platform == "darwin":
@@ -13,57 +14,51 @@ if sys.platform == "darwin":
         dyld_path = os.environ.get("DYLD_FALLBACK_LIBRARY_PATH", "")
         if brew_lib_path not in dyld_path:
             os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = f"{brew_lib_path}:{dyld_path}".strip(":")
-            os.execve(sys.executable, [sys.executable] + sys.argv, os.environ)
 
 from weasyprint import HTML, default_url_fetcher
+from core.config import TEMP_PDF_DIR, CACHE_DIR
 
-TEMP_PDF_DIR = os.path.join(tempfile.gettempdir(), 'formweaver_pdfs')
-os.makedirs(TEMP_PDF_DIR, exist_ok=True)
+# Create SSL context that bypasses local certificate verification issues (e.g. on macOS)
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
-CACHE_DIR = os.path.join(tempfile.gettempdir(), 'weasyprint_url_cache')
-os.makedirs(CACHE_DIR, exist_ok=True)
 
-# Create unverified SSL context to bypass local certificate verification issues (e.g. on macOS)
-ssl_context = ssl._create_unverified_context()
+def _pdf_path(file_id):
+    """Returns the filesystem path for a given PDF file ID."""
+    return os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
 
-def cached_url_fetcher(url, timeout=15):
-    # Only cache HTTP/HTTPS requests
-    if not url.startswith('http://') and not url.startswith('https://'):
-        return default_url_fetcher(url, timeout)
-        
-    # Generate a safe local filename based on the URL
+
+def _read_from_cache(url):
+    """Checks the cache for a previously fetched URL. Returns a dict or None."""
     safe_filename = urllib.parse.quote_plus(url)
     cache_path = os.path.join(CACHE_DIR, safe_filename)
-    
-    # Check if cached file exists
+
     if os.path.exists(cache_path):
         try:
             with open(cache_path, 'rb') as f:
                 content = f.read()
-            
-            # Determine mime_type
-            mime_type = None
-            if '.woff2' in url:
-                mime_type = 'font/woff2'
-            elif '.woff' in url:
-                mime_type = 'font/woff'
-            elif '.ttf' in url:
-                mime_type = 'font/ttf'
-            elif 'css' in url:  # Match 'css' anywhere in the URL (e.g. css2?family=...)
+
+            mime_type, _ = mimetypes.guess_type(url)
+            # Special case: Google Fonts CSS URLs like css2?family=...
+            if mime_type is None and 'css' in url:
                 mime_type = 'text/css'
-            elif '.png' in url:
-                mime_type = 'image/png'
-            elif '.jpg' in url or '.jpeg' in url:
-                mime_type = 'image/jpeg'
-                
+
             res = {'string': content}
             if mime_type:
                 res['mime_type'] = mime_type
             return res
         except Exception as e:
             print(f"[WEASYPRINT CACHE ⚠️] 캐시 읽기 실패, 일반 다운로드: {e}")
-            
-    # Fetch from network on cache miss
+
+    return None
+
+
+def _fetch_and_cache(url, timeout):
+    """Fetches a URL from the network, saves to cache, and returns a dict."""
+    safe_filename = urllib.parse.quote_plus(url)
+    cache_path = os.path.join(CACHE_DIR, safe_filename)
+
     try:
         print(f"[WEASYPRINT CACHE 🌐] 캐시 미스, 다운로드 시작: {url}")
         req = urllib.request.Request(
@@ -72,10 +67,10 @@ def cached_url_fetcher(url, timeout=15):
         )
         with urllib.request.urlopen(req, timeout=timeout, context=ssl_context) as response:
             content = response.read()
-            
+
         with open(cache_path, 'wb') as f:
             f.write(content)
-            
+
         mime_type = response.headers.get('Content-Type')
         return {
             'string': content,
@@ -92,6 +87,18 @@ def cached_url_fetcher(url, timeout=15):
         except Exception as fallback_err:
             print(f"[WEASYPRINT CACHE ❌] 기본 페처 다운로드 최종 실패: {fallback_err}")
             raise fallback_err
+
+
+def cached_url_fetcher(url, timeout=15):
+    # Only cache HTTP/HTTPS requests
+    if not url.startswith('http://') and not url.startswith('https://'):
+        return default_url_fetcher(url, timeout)
+
+    cached = _read_from_cache(url)
+    if cached is not None:
+        return cached
+
+    return _fetch_and_cache(url, timeout)
 
 def cleanup_old_pdfs(max_age_hours=1):
     """
@@ -123,7 +130,7 @@ def generate_pdf(master_html):
     cleanup_old_pdfs(max_age_hours=1)
     
     file_id = uuid.uuid4().hex
-    pdf_path = os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
+    pdf_path = _pdf_path(file_id)
     
     # WeasyPrint가 static/fonts/... 로컬 경로를 인식할 수 있도록 base_url을 프로젝트 루트로 설정
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -138,7 +145,7 @@ def cleanup_pdf(file_id):
     """
     Deletes the generated PDF file to free up space.
     """
-    pdf_path = os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
+    pdf_path = _pdf_path(file_id)
     if os.path.exists(pdf_path):
         try:
             os.remove(pdf_path)
@@ -149,7 +156,7 @@ def get_pdf_path(file_id):
     """
     Returns the path to the PDF file if it exists, else None.
     """
-    pdf_path = os.path.join(TEMP_PDF_DIR, f"{file_id}.pdf")
+    pdf_path = _pdf_path(file_id)
     if os.path.exists(pdf_path):
         return pdf_path
     return None

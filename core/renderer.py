@@ -1,5 +1,6 @@
 import re
 import urllib.parse
+from core.config import PAGE_DIMENSIONS, PAGE_MARGIN_PX, GRID_UNIT_H, GRID_UNIT_V, MIN_CANVAS_WIDTH
 from core.macros import process_repeat_macros, snap_css_to_grid
 from core.themes import apply_theme_aesthetics, THEME_CONFIG
 
@@ -8,24 +9,18 @@ def get_page_config(paper_size='A4', orientation='portrait'):
     Calculates dynamic pixel-perfect container dimensions and offsets
     based on the requested paper size and orientation.
     """
-    page_dimensions = {
-        'A4': (793.7, 1122.5),
-        'A5': (559.4, 793.7),
-        'B5': (665.2, 944.9)
-    }
-    W, H = page_dimensions.get(paper_size, page_dimensions['A4'])
+    W, H = PAGE_DIMENSIONS.get(paper_size, PAGE_DIMENSIONS['A4'])
     
     if orientation == 'landscape':
         W, H = H, W
     
     # Target margin ~40px
-    target_margin = 40
-    avail_w = W - (target_margin * 2)
-    cw = int(avail_w // 140) * 140
-    if cw < 280: cw = 280
+    avail_w = W - (PAGE_MARGIN_PX * 2)
+    cw = int(avail_w // GRID_UNIT_H) * GRID_UNIT_H
+    if cw < MIN_CANVAS_WIDTH: cw = MIN_CANVAS_WIDTH
     
-    avail_h = H - (target_margin * 2)
-    ch = int(avail_h // 20) * 20
+    avail_h = H - (PAGE_MARGIN_PX * 2)
+    ch = int(avail_h // GRID_UNIT_V) * GRID_UNIT_V
     
     half_cw = cw / 2
     shift_x = -10 if half_cw % 20 != 0 else 0
@@ -38,6 +33,41 @@ def get_page_config(paper_size='A4', orientation='portrait'):
         'top': top_pos
     }
 
+def _clean_llm_output(llm_output):
+    """Extracts style and body from raw LLM HTML output, stripping unwanted tags."""
+    style_match = re.search(r'<style>(.*?)</style>', llm_output, re.DOTALL | re.IGNORECASE)
+    llm_style = style_match.group(1) if style_match else ""
+    
+    body_match = re.search(r'<body>(.*?)</body>', llm_output, re.DOTALL | re.IGNORECASE)
+    llm_body = body_match.group(1) if body_match else llm_output
+    
+    # Strip residual HTML wrapper tags and markdown fences in a single pass
+    cleanup_pattern = re.compile(
+        r'<style>.*?</style>|<!DOCTYPE.*?>|<html.*?>|</html>|<head.*?>|</head>|^```html\s*|```\s*$',
+        re.DOTALL | re.IGNORECASE | re.MULTILINE
+    )
+    llm_body = cleanup_pattern.sub('', llm_body).strip()
+    
+    return llm_style, llm_body
+
+def _generate_background_css(line_color):
+    """Generates CSS classes for lined, grid, and dot SVG backgrounds."""
+    backgrounds = {
+        'lined-bg': f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><rect x='0' y='19' width='20' height='1' fill='{line_color}'/></svg>",
+        'grid-bg': f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><path d='M 20 0 L 20 20 L 0 20' fill='none' stroke='{line_color}' stroke-width='1'/></svg>",
+        'dot-bg': f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='1' cy='1' r='1' fill='{line_color}'/></svg>",
+    }
+    css_parts = []
+    for class_name, svg in backgrounds.items():
+        encoded = urllib.parse.quote(svg)
+        css_parts.append(f"""
+.{class_name} {{
+    background-image: url("data:image/svg+xml,{encoded}") !important;
+    background-position: top !important;
+    background-repeat: repeat !important;
+}}""")
+    return "\n".join(css_parts)
+
 def assemble_master_html(llm_output, design_mode, page_size, orientation='portrait', style_theme='Minimal'):
     """
     Cleans up the LLM-generated HTML, applies aesthetics, and wraps it in the page container.
@@ -46,18 +76,7 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
     cw, ch = config['cw'], config['ch']
     shift_x, top_pos = config['shift_x'], config['top']
     
-    style_match = re.search(r'<style>(.*?)</style>', llm_output, re.DOTALL | re.IGNORECASE)
-    llm_style = style_match.group(1) if style_match else ""
-    
-    body_match = re.search(r'<body>(.*?)</body>', llm_output, re.DOTALL | re.IGNORECASE)
-    llm_body = body_match.group(1) if body_match else llm_output
-    
-    llm_body = re.sub(r'<style>.*?</style>', '', llm_body, flags=re.DOTALL | re.IGNORECASE)
-    llm_body = re.sub(r'<!DOCTYPE.*?>', '', llm_body, flags=re.IGNORECASE)
-    llm_body = re.sub(r'<html.*?>|</html>', '', llm_body, flags=re.IGNORECASE)
-    llm_body = re.sub(r'<head.*?>|</head>', '', llm_body, flags=re.IGNORECASE)
-    llm_body = re.sub(r'^```html\s*', '', llm_body, flags=re.MULTILINE)
-    llm_body = re.sub(r'```\s*$', '', llm_body, flags=re.MULTILINE).strip()
+    llm_style, llm_body = _clean_llm_output(llm_output)
     
     # Process repeat loops
     llm_body = process_repeat_macros(llm_body)
@@ -72,35 +91,7 @@ def assemble_master_html(llm_output, design_mode, page_size, orientation='portra
     dot_css = ""
     line_color = '#333' if design_mode == 'guide' else THEME_CONFIG.get(style_theme, THEME_CONFIG['Minimal']).get('line_color', '#e5e7eb')
     
-    # 1. Lined Background SVG
-    lined_svg = f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><rect x='0' y='19' width='20' height='1' fill='{line_color}'/></svg>"
-    lined_svg_encoded = urllib.parse.quote(lined_svg)
-    
-    # 2. Grid (Graph) Background SVG
-    grid_svg = f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><path d='M 20 0 L 20 20 L 0 20' fill='none' stroke='{line_color}' stroke-width='1'/></svg>"
-    grid_svg_encoded = urllib.parse.quote(grid_svg)
-    
-    # 3. Dot Grid Background SVG
-    dot_pattern_svg = f"<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='1' cy='1' r='1' fill='{line_color}'/></svg>"
-    dot_pattern_svg_encoded = urllib.parse.quote(dot_pattern_svg)
-    
-    lined_bg_css = f"""
-.lined-bg {{
-    background-image: url("data:image/svg+xml,{lined_svg_encoded}") !important;
-    background-position: top !important;
-    background-repeat: repeat !important;
-}}
-.grid-bg {{
-    background-image: url("data:image/svg+xml,{grid_svg_encoded}") !important;
-    background-position: top !important;
-    background-repeat: repeat !important;
-}}
-.dot-bg {{
-    background-image: url("data:image/svg+xml,{dot_pattern_svg_encoded}") !important;
-    background-position: top !important;
-    background-repeat: repeat !important;
-}}
-"""
+    lined_bg_css = _generate_background_css(line_color)
     
     if design_mode == 'guide':
         bg_x = (config['W'] - cw) / 2

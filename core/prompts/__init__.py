@@ -2,12 +2,14 @@ from core.prompts.base_templates import SYSTEM_PROMPT_TEMPLATE, GUIDE_SYSTEM_PRO
 from core.prompts.layout_hints import LAYOUT_HINTS
 from core.prompts.review_templates import REVIEW_PROMPT_TEMPLATE
 
+from core.config import BASE_LAYOUT_HINT_KEYS
+
 def get_system_prompts(title: str = "", description: str = "", category: str = None):
     # Space-insensitive matching logic: remove all spacing
     search_text = f"{title}{description}".lower().replace(" ", "").replace("\t", "").replace("\n", "")
     
     # 5 core layout instructions are always included as a baseline (few-shot context for stability)
-    base_keys = ["mandalart", "monthly", "weekly", "daily", "cornell"]
+    base_keys = BASE_LAYOUT_HINT_KEYS
     matched_hints_dict = {key: LAYOUT_HINTS[key]["text"] for key in base_keys}
     
     # Check layout hints against keywords (with spaces removed for comparison)

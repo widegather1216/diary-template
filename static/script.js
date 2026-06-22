@@ -215,8 +215,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (theme.soften_borders) {
                 modifiedHtml = modifiedHtml.replace(/border-radius:\s*0/g, 'border-radius: 12px');
             }
+            const fontsHtml = theme.fonts ? theme.fonts : (theme.fonts_css ? `<style>${theme.fonts_css}</style>` : '');
             const themeCss = `<style>${theme.css}</style>`;
-            modifiedHtml = modifiedHtml.replace('</head>', theme.fonts + themeCss + '</head>');
+            modifiedHtml = modifiedHtml.replace('</head>', fontsHtml + themeCss + '</head>');
         }
         
         // 테마 배경 라인색 주입

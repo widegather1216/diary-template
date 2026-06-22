@@ -1,10 +1,10 @@
 import os
-import re
 import threading
 import json
 import time
 from flask import Flask, request, send_file, render_template, jsonify, Response
 
+from core.config import LANDSCAPE_KEYWORDS
 from core.generator import generate_layout_html
 from core.pdf_manager import generate_pdf, cleanup_pdf, get_pdf_path
 from core.task_manager import TaskManager
@@ -27,7 +27,7 @@ def bg_generate_task(task_id, data):
     
     if not orientation:
         combined_text = f"{title} {description}".lower()
-        if any(keyword in combined_text for keyword in ["가로", "landscape", "가로형", "가로방향", "넓게"]):
+        if any(keyword in combined_text for keyword in LANDSCAPE_KEYWORDS):
             orientation = "landscape"
         else:
             orientation = "portrait"
@@ -128,8 +128,12 @@ def task_stream(task_id):
 
 @app.route('/api/download-pdf/<file_id>', methods=['GET'])
 def download_pdf(file_id):
-    if not re.match(r'^[a-f0-9]+$', file_id):
-        return "Invalid file ID", 400
+    if len(file_id) != 32:
+        return "Invalid file ID length", 400
+    try:
+        int(file_id, 16)
+    except ValueError:
+        return "Invalid file ID characters", 400
         
     pdf_path = get_pdf_path(file_id)
     if not pdf_path:
@@ -147,15 +151,8 @@ def download_pdf(file_id):
 
 @app.route('/api/cleanup-pdf', methods=['POST'])
 def cleanup_pdf_route():
-    data = request.get_json(silent=True)
-    if request.data and not data:
-        import json
-        try:
-            data = json.loads(request.data)
-        except:
-            data = {}
-            
-    if data and 'file_id' in data:
+    data = request.get_json(silent=True, force=True) or {}
+    if 'file_id' in data:
         cleanup_pdf(data['file_id'])
     return '', 204
 

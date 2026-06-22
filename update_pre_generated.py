@@ -1,33 +1,31 @@
 import json
 import os
-from core.generator import generate_layout_html
+import sys
+from core.generator import generate_default_layout_html
 
 json_path = os.path.join("static", "pre_generated_layouts.json")
 
 # Load existing JSON
-with open(json_path, 'r', encoding='utf-8') as f:
-    layouts = json.load(f)
+try:
+    with open(json_path, 'r', encoding='utf-8') as f:
+        layouts = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    print(f"[ERROR ❌] 레이아웃 백업 파일({json_path})을 읽는 동안 오류가 발생했습니다: {e}")
+    print("새로운 레이아웃 딕셔너리를 초기화합니다.")
+    layouts = {}
 
 # Mandalart update
 print("Generating new Mandalart...")
-mandalart_html = generate_layout_html(
+mandalart_html = generate_default_layout_html(
     title="Mandalart Plan",
-    description="",
-    page_size="A4",
-    design_mode="print",
-    orientation="portrait",
     style_theme="Minimal"
 )
 layouts["Mandalart Plan"] = mandalart_html
 
 # Weekly Planner update
 print("Generating new Weekly Planner...")
-weekly_html = generate_layout_html(
+weekly_html = generate_default_layout_html(
     title="위클리 플레너",
-    description="",
-    page_size="A4",
-    design_mode="print",
-    orientation="portrait",
     style_theme="Minimal"
 )
 layouts["위클리 플레너"] = weekly_html

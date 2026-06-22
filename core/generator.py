@@ -3,13 +3,41 @@ import time
 from pydantic import BaseModel
 from google.genai import types
 
+from core.config import MODEL_NAME, MAX_GENERATION_ATTEMPTS, GENERATION_TEMPERATURE, GENERATION_MAX_OUTPUT_TOKENS
 from core.model_config import get_gemini_client
 from core.prompts import get_system_prompts, get_review_prompt
 from core.renderer import get_page_config, assemble_master_html
 
 class LayoutResponse(BaseModel):
     html: str
-# ... [lines 11-112 remain unchanged] ...
+
+_LAYOUT_GENERATION_CONFIG = types.GenerateContentConfig(
+    response_mime_type="application/json",
+    response_schema=LayoutResponse,
+    temperature=GENERATION_TEMPERATURE,
+    max_output_tokens=GENERATION_MAX_OUTPUT_TOKENS,
+)
+
+
+def _parse_response(response, fallback=None):
+    """Parse JSON response from Gemini API with error handling."""
+    try:
+        result = json.loads(response.text)
+        return result.get("html", fallback or "")
+    except ValueError:
+        if fallback is not None:
+            return fallback
+        finish_reason = None
+        if response.candidates:
+            finish_reason = response.candidates[0].finish_reason
+        if finish_reason == 'SAFETY':
+            raise Exception("안전 필터에 의해 생성이 중단되었습니다.")
+        elif finish_reason == 'RECITATION':
+            raise Exception("AI가 유사도 필터에 걸렸습니다. 독창적인 내용을 입력하세요.")
+        else:
+            raise Exception(f"생성 중단됨 (사유: {finish_reason})")
+
+
 def _request_initial_layout(client, title, description, page_size, orientation, style_theme, active_prompt, config, category=None):
     style_instructions = {
         'Minimal': "Use sans-serif fonts (e.g., 'Inter', 'Helvetica'), thin 1px borders, abundant whitespace, and completely remove any unnecessary decorations or shading. Keep it clean and modern.",
@@ -49,30 +77,12 @@ def _request_initial_layout(client, title, description, page_size, orientation, 
     """
     
     response = client.models.generate_content(
-        model='gemini-3.1-flash-lite',
+        model=MODEL_NAME,
         contents=[active_prompt, prompt],
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=LayoutResponse,
-            temperature=0.2,
-            max_output_tokens=8192,
-        )
+        config=_LAYOUT_GENERATION_CONFIG,
     )
     
-    try:
-        result = json.loads(response.text)
-        return result.get("html", "")
-    except ValueError:
-        finish_reason = None
-        if response.candidates:
-            finish_reason = response.candidates[0].finish_reason
-            
-        if finish_reason == 'SAFETY':
-            raise Exception("안전 필터에 의해 생성이 중단되었습니다.")
-        elif finish_reason == 'RECITATION':
-            raise Exception("AI가 유사도 필터에 걸렸습니다. 독창적인 내용을 입력하세요.")
-        else:
-            raise Exception(f"생성 중단됨 (사유: {finish_reason})")
+    return _parse_response(response)
 
 def _request_self_reflection(client, title, description, active_prompt, html_content, design_mode):
     print("[TRACKING 🔍] 2차 검증 (Self-Reflection) 요청 중...")
@@ -95,21 +105,21 @@ def _request_self_reflection(client, title, description, active_prompt, html_con
     )
     
     review_response = client.models.generate_content(
-        model='gemini-3.1-flash-lite',
+        model=MODEL_NAME,
         contents=[active_prompt, review_prompt],
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=LayoutResponse,
-            temperature=0.2,
-            max_output_tokens=8192,
-        )
+        config=_LAYOUT_GENERATION_CONFIG,
     )
     
-    try:
-        result = json.loads(review_response.text)
-        return result.get("html", html_content)
-    except ValueError:
-        return html_content # Fallback to first pass output if blocked
+    return _parse_response(review_response, fallback=html_content)
+
+def _build_generation_context(title, description, page_size, design_mode, orientation, style_theme, category):
+    """Build and return the generation context: (client, config, active_prompt)."""
+    client = get_gemini_client()
+    config = get_page_config(page_size, orientation)
+    SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(title=title, description=description, category=category)
+    active_prompt = GUIDE_SYSTEM_PROMPT if design_mode == 'guide' else SYSTEM_PROMPT
+    return client, config, active_prompt
+
 
 def generate_layout_html(title, description, page_size, design_mode, orientation, style_theme='Minimal', category=None, progress_callback=None):
     """
@@ -118,15 +128,13 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
     """
     from core.validator import validate_layout
 
-    client = get_gemini_client()
-    config = get_page_config(page_size, orientation)
-    SYSTEM_PROMPT, GUIDE_SYSTEM_PROMPT = get_system_prompts(title=title, description=description, category=category)
-    
-    active_prompt = GUIDE_SYSTEM_PROMPT if design_mode == 'guide' else SYSTEM_PROMPT
+    client, config, active_prompt = _build_generation_context(
+        title, description, page_size, design_mode, orientation, style_theme, category
+    )
     
     current_description = description
     last_html = ""
-    max_attempts = 3
+    max_attempts = MAX_GENERATION_ATTEMPTS
     
     for attempt in range(1, max_attempts + 1):
         if progress_callback:
@@ -184,3 +192,20 @@ def generate_layout_html(title, description, page_size, design_mode, orientation
             
     master_html = assemble_master_html(last_html, design_mode, page_size, orientation, style_theme)
     return master_html
+
+
+def generate_default_layout_html(title, style_theme="Minimal", category=None):
+    """
+    Helper function for CLI scripts and batch updates to generate HTML layouts
+    with standard default settings (A4, print mode, portrait, empty description).
+    """
+    return generate_layout_html(
+        title=title,
+        description="",
+        page_size="A4",
+        design_mode="print",
+        orientation="portrait",
+        style_theme=style_theme,
+        category=category
+    )
+
