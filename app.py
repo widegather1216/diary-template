@@ -16,6 +16,16 @@ app = Flask(__name__)
 # Thread-safe in-memory task manager with garbage collection
 task_manager = TaskManager()
 
+def _detect_category(title, description, category):
+    if category:
+        return category
+    combined_text = f"{title} {description}".lower().replace(" ", "")
+    for hint_id, hint_data in LAYOUT_HINTS.items():
+        cleaned_keywords = [kw.lower().replace(" ", "") for kw in hint_data["keywords"]]
+        if any(kw in combined_text for kw in cleaned_keywords):
+            return hint_id
+    return None
+
 def bg_generate_task(task_id, data):
     title = data.get('title')
     description = data.get('description', '')
@@ -23,7 +33,7 @@ def bg_generate_task(task_id, data):
     design_mode = data.get('designMode', 'print')
     orientation = data.get('orientation')
     style_theme = data.get('styleTheme', 'Minimal')
-    category = data.get('category')
+    category = _detect_category(title, description, data.get('category'))
     
     if not orientation:
         combined_text = f"{title} {description}".lower()
@@ -58,9 +68,76 @@ def bg_generate_task(task_id, data):
     except Exception as e:
         task_manager.update_task(task_id, 'failed', message=f'생성 실패: {str(e)}')
 
+
+
+def bg_generate_html_task(task_id, data):
+    title = data.get('title')
+    description = data.get('description', '')
+    page_size = data.get('pageSize', 'A4')
+    design_mode = data.get('designMode', 'print')
+    orientation = data.get('orientation')
+    style_theme = data.get('styleTheme', 'Minimal')
+    category = _detect_category(title, description, data.get('category'))
+    
+    if not orientation:
+        combined_text = f"{title} {description}".lower()
+        if any(keyword in combined_text for keyword in LANDSCAPE_KEYWORDS):
+            orientation = "landscape"
+        else:
+            orientation = "portrait"
+
+    def progress_callback(status, message):
+        task_manager.update_task(task_id, status, message)
+
+    try:
+        master_html = generate_layout_html(
+            title=title,
+            description=description,
+            page_size=page_size,
+            design_mode=design_mode,
+            orientation=orientation,
+            style_theme=style_theme,
+            category=category,
+            progress_callback=progress_callback
+        )
+        
+        task_manager.update_task(task_id, 'success', extra_fields={
+            'html': master_html,
+            'title': title,
+            'page_size': page_size,
+            'orientation': orientation
+        })
+    except Exception as e:
+        task_manager.update_task(task_id, 'failed', message=f'생성 실패: {str(e)}')
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/editor')
+def editor():
+    return render_template('editor.html')
+
+
+
+@app.route('/api/generate-html', methods=['POST'])
+def generate_html_route():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'error': 'Invalid JSON request'}), 400
+        
+    title = data.get('title')
+    if not title:
+        return jsonify({'error': 'Title is required'}), 400
+
+    task_id = task_manager.create_task()
+    
+    # Start thread
+    thread = threading.Thread(target=bg_generate_html_task, args=(task_id, data))
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({'task_id': task_id})
 
 @app.route('/api/config', methods=['GET'])
 def get_config():

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormWeaver - Multi-page Diary Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}?v=8">
+</head>
+<body>
+    <div class="editor-container">
+        <!-- 1. Left Sidebar: Page List & Hierarchy -->
+        <aside class="sidebar pages-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    <span>FormWeaver</span>
+                </div>
+                <span class="badge beta-badge">Builder</span>
+            </div>
+            
+            <div class="pages-list-title-bar">
+                <span class="section-title">다이어리 페이지 구성</span>
+                <button type="button" class="add-page-btn" id="open-add-modal-btn" title="새 페이지 추가">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    추가
+                </button>
+            </div>
+            
+            <div class="pages-list" id="pages-list">
+                <!-- Dynamic pages list with duplicate/delete icons will be inserted here -->
+                <div class="empty-list-state">
+                    좌측 상단의 '+ 추가' 버튼을 눌러 첫 페이지를 생성해보세요.
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <a href="/" class="back-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    단일 페이지 생성기로 가기
+                </a>
+            </div>
+        </aside>
+
+        <!-- 2. Central Workspace Canvas -->
+        <main class="workspace-canvas">
+            <div class="canvas-header">
+                <div class="page-indicator" id="current-page-title">선택된 페이지 없음</div>
+                
+                <!-- Link Edit Mode Toggle Switch -->
+                <div class="mode-toggle-container">
+                    <span class="mode-label">링크 연결 모드</span>
+                    <label class="switch">
+                        <input type="checkbox" id="link-mode-checkbox">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <div class="canvas-controls">
+                    <button class="control-btn" id="zoom-out-btn" title="축소">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                    </button>
+                    <span class="zoom-value" id="zoom-value">80%</span>
+                    <button class="control-btn" id="zoom-in-btn" title="확대">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Page Container (mimicking real notebook page) -->
+            <div class="page-viewport">
+                <!-- Helper message banner when in link mode -->
+                <div id="link-helper-banner" class="link-helper-banner hidden">
+                    💡 <strong>링크 연결 모드 활성:</strong> 페이지 내 하이퍼링크를 넣고 싶은 영역(예: 날짜 칸, 메모 상자)을 클릭하세요.
+                </div>
+                
+                <div class="paper-container" id="paper-container">
+                    <div class="paper-placeholder">
+                        <div class="placeholder-icon">📖</div>
+                        <h3>나만의 멀티 페이지 다이어리 빌더</h3>
+                        <p>좌측 상단의 <strong>'+ 추가'</strong> 버튼을 클릭하여 다이어리 양식 페이지들을 하나씩 AI로 만들어보세요. 생성된 페이지들 사이에 직접 마우스 클릭으로 하이퍼링크를 엮을 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 3. Right Sidebar: Global Actions & Export -->
+        <aside class="sidebar control-panel">
+            <div class="panel-section">
+                <h3>다이어리 설정</h3>
+                <div class="form-group">
+                    <label for="editor-title">다이어리 이름</label>
+                    <input type="text" id="editor-title" value="나의 커스텀 다이어리" autocomplete="off" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="editor-pageSize">인쇄 규격</label>
+                        <select id="editor-pageSize">
+                            <option value="A4">A4 (210×297)</option>
+                            <option value="A5">A5 (148×210)</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="editor-styleTheme">기본 디자인 스타일</label>
+                        <select id="editor-styleTheme">
+                            <option value="Minimal">미니멀</option>
+                            <option value="Cute">큐트</option>
+                            <option value="Editorial">에디토리얼</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed instructions for Link editing -->
+            <div class="panel-section flex-grow">
+                <h3>사용 설명서</h3>
+                <div class="guide-box">
+                    <h4>🛠️ 다이어리 빌딩 가이드</h4>
+                    <ol class="guide-list">
+                        <li><strong>페이지 추가:</strong> 좌측 <code>+ 추가</code>를 눌러 필요한 플래너(먼슬리, 데일리 등)를 AI로 각각 개별 생성합니다.</li>
+                        <li><strong>페이지 복제:</strong> 일기나 할일 목록처럼 매일 쓰는 양식은 복제 버튼(📋)을 눌러 날짜별로 빠르게 여러 장 생성하세요.</li>
+                        <li><strong>하이퍼링크 생성:</strong> 상단의 <code>링크 연결 모드</code>를 켜고, 캘린더나 특정 텍스트를 클릭한 뒤 대상 페이지를 선택하면 클릭 가능한 PDF 링크가 자동으로 바인딩됩니다.</li>
+                        <li><strong>링크 작동 확인:</strong> 링크 연결 모드를 끄고 페이지의 링크 영역을 누르면 실제 연결된 페이지로 즉시 점프합니다.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="panel-section footer-actions border-top">
+                <button type="button" class="action-btn success-btn" id="export-pdf-btn" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    PDF로 내보내기 (인쇄)
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modals & Overlay -->
+    
+    <!-- 1. Add Page Modal -->
+    <div class="modal-overlay hidden" id="add-page-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>새로운 다이어리 페이지 생성</h3>
+                <button type="button" class="close-modal-btn" id="close-add-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-page-title">페이지 이름 (메뉴 노출용)</label>
+                    <input type="text" id="new-page-title" placeholder="예: 1월 먼슬리, 오늘의 일기, 독서 일지" autocomplete="off" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new-page-prompt">원하는 양식 명칭 및 요구사항</label>
+                    <textarea id="new-page-prompt" placeholder="어떤 종류의 양식을 만들고 싶으신가요?&#10;예: '오늘의 할일 목록과 타임라인이 있는 데일리 플래너'&#10;예: '왼쪽에 도서 정보, 우측에 메모가 있는 독서 노트'"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="new-page-style">디자인 스타일</label>
+                        <select id="new-page-style">
+                            <option value="Minimal">미니멀 (Minimal)</option>
+                            <option value="Cute">큐트 (Cute)</option>
+                            <option value="Editorial">에디토리얼 (Editorial)</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="new-page-orientation">방향</label>
+                        <select id="new-page-orientation">
+                            <option value="portrait">세로방향 (Portrait)</option>
+                            <option value="landscape">가로방향 (Landscape)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- SSE Progress Loader inside Modal -->
+                <div class="status-box hidden" id="modal-status-box">
+                    <div class="spinner"></div>
+                    <div class="status-msg" id="modal-status-msg">AI가 페이지 레이아웃을 생성하는 중...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-btn cancel-btn" id="cancel-add-btn">취소</button>
+                <button type="button" class="modal-btn submit-btn" id="submit-add-btn">AI로 페이지 생성</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Hyperlink Selector Tooltip/Popup (renders absolutely in JS relative to clicked element) -->
+    <div class="link-selector-popup hidden" id="link-selector-popup">
+        <div class="popup-title">🔗 하이퍼링크 연결 설정</div>
+        <div class="popup-body">
+            <select id="link-target-select">
+                <option value="">-- 연결 대상 페이지 선택 --</option>
+                <!-- Dynamic pages list will be added in JS -->
+            </select>
+            <div class="popup-actions">
+                <button type="button" class="popup-btn unlink-btn" id="unlink-btn">링크 해제</button>
+                <button type="button" class="popup-btn apply-btn" id="apply-link-btn">링크 적용</button>
+            </div>
+        </div>
+        <div class="popup-arrow"></div>
+    </div>
+
+    <!-- Hidden Container used for window.print() -->
+    <div id="print-container" class="print-only"></div>
+
+    <script src="{{ url_for('static', filename='editor.js') }}?v=8"></script>
+</body>
+</html>
