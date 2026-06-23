@@ -495,6 +495,13 @@ function renderActivePage() {
     paperContainer.innerHTML = '';
     const iframe = document.createElement('iframe');
     iframe.id = 'preview-iframe';
+    
+    // 브라우저 로드 시점에 맞춘 이벤트 리스너 사전 정의
+    iframe.onload = () => {
+        setupIframeInteractions(iframe);
+        updateZoomUI();
+    };
+    
     paperContainer.appendChild(iframe);
     
     const doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -504,14 +511,16 @@ function renderActivePage() {
     doc.write(cleanHTML);
     doc.close();
     
-    iframe.onload = () => {
-        setupIframeInteractions(iframe);
-        updateZoomUI();
-    };
+    // 동기식으로 로드가 완료되었을 때를 위한 즉시 초기화
+    setupIframeInteractions(iframe);
+    updateZoomUI();
 }
 
 // 6. IFrame Event Handlers & Link Binding Logic
 function setupIframeInteractions(iframe) {
+    if (iframe.dataset.initialized === 'true') return;
+    iframe.dataset.initialized = 'true';
+    
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     
     if (linkMode) {
