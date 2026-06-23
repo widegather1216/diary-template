@@ -1,69 +1,7 @@
 // static/editor.js
 
-let pages = [
-    {
-        id: 'page-mock-monthly',
-        title: '테스트 먼슬리',
-        orientation: 'portrait',
-        html: `
-<div class="page-container" style="padding: 40px; font-family: 'Outfit', sans-serif; box-sizing: border-box; width: 100%; height: 100%; min-height: 100%; background: #faf8f5; color: #333;">
-    <h1 style="text-align: center; color: #8b5cf6; font-size: 28px; margin-bottom: 20px;">Monthly Plan</h1>
-    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
-        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Sun</div>
-        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Mon</div>
-        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Tue</div>
-        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Wed</div>
-        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Thu</div>
-        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Fri</div>
-        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Sat</div>
-        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">1</div>
-        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">2</div>
-        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">3</div>
-        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">4</div>
-        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">5</div>
-        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">6</div>
-        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">7</div>
-    </div>
-    <div style="margin-top: 30px; text-align: center;">
-        <p style="font-size: 14px; color: #666;">일정 확인 후 상세 계획은 위클리 페이지를 참고해 주세요.</p>
-    </div>
-</div>`
-    },
-    {
-        id: 'page-mock-weekly',
-        title: '테스트 위클리',
-        orientation: 'portrait',
-        html: `
-<div class="page-container" style="padding: 40px; font-family: 'Outfit', sans-serif; box-sizing: border-box; width: 100%; height: 100%; min-height: 100%; background: #faf8f5; color: #333;">
-    <h1 style="text-align: center; color: #10b981; font-size: 28px; margin-bottom: 20px;">Weekly Notes</h1>
-    <div style="display: flex; flex-direction: column; gap: 15px;">
-        <div style="border-bottom: 2px solid #10b981; padding-bottom: 5px; font-weight: bold;">Weekly Goals</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
-                <strong>Monday</strong>
-                <p style="color: #888; font-size: 13px; margin-top: 8px;">주간 업무 및 일정을 정리합니다.</p>
-            </div>
-            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
-                <strong>Tuesday</strong>
-            </div>
-            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
-                <strong>Wednesday</strong>
-            </div>
-            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
-                <strong>Thursday</strong>
-            </div>
-            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
-                <strong>Friday</strong>
-            </div>
-            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
-                <strong>Weekend</strong>
-            </div>
-        </div>
-    </div>
-</div>`
-    }
-];
-let activePageId = 'page-mock-monthly';
+let pages = [];
+let activePageId = null;
 let currentZoom = 0.8;
 let linkMode = false;
 let selectedElement = null;
@@ -937,9 +875,41 @@ function scopeRule(rule, scope) {
     return rule.cssText;
 }
 
-// 최초 로드 시 Mock 데이터가 탑재되어 있으면 사이드바와 첫 페이지 즉시 활성화
-if (pages.length > 0) {
-    buildSidebar();
-    renderActivePage();
-    exportBtn.disabled = false;
+// 최초 로드 시 고품질 정적 템플릿 JSON 파일 비동기 로딩 개시
+async function loadDefaultMockPages() {
+    try {
+        const response = await fetch('/static/pre_generated_layouts.json');
+        if (!response.ok) throw new Error('Failed to load layouts JSON');
+        
+        const layouts = await response.json();
+        
+        // 먼슬리와 위클리 고품질 AI 템플릿을 기본 탑재
+        if (layouts.monthly && layouts.weekly) {
+            pages = [
+                {
+                    id: 'page-mock-monthly',
+                    title: '테스트 먼슬리',
+                    orientation: 'portrait',
+                    html: layouts.monthly
+                },
+                {
+                    id: 'page-mock-weekly',
+                    title: '테스트 위클리',
+                    orientation: 'portrait',
+                    html: layouts.weekly
+                }
+            ];
+            activePageId = 'page-mock-monthly';
+            
+            buildSidebar();
+            renderActivePage();
+            exportBtn.disabled = false;
+        }
+    } catch (e) {
+        console.error('Error loading default mock pages:', e);
+        // JSON 로드 실패 시 빈 상태로 부팅
+        buildSidebar();
+    }
 }
+
+loadDefaultMockPages();
