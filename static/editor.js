@@ -519,6 +519,7 @@ function renderActivePage() {
 // 6. IFrame Event Handlers & Link Binding Logic
 function setupIframeInteractions(iframe) {
     const doc = iframe.contentDocument || iframe.contentWindow.document;
+    console.log("setupIframeInteractions: linkMode =", linkMode, "doc.initialized =", doc ? doc.initialized : 'no-doc');
     if (!doc || doc.initialized === true) return;
     doc.initialized = true;
     
@@ -553,7 +554,13 @@ function setupIframeInteractions(iframe) {
             e.preventDefault();
             e.stopPropagation();
             
-            selectedElement = e.target;
+            let targetEl = e.target;
+            // Safari/Webkit text node click target normalization
+            if (targetEl && targetEl.nodeType === 3) {
+                targetEl = targetEl.parentNode;
+            }
+            selectedElement = targetEl;
+            console.log("Iframe Click target:", selectedElement, "tag:", selectedElement ? selectedElement.tagName : 'none');
             
             // Calculate screen position relative to parent window scroll & iframe bounding rectangle
             const iframeRect = iframe.getBoundingClientRect();
@@ -615,6 +622,7 @@ function showLinkPopup(x, y) {
     
     linkPopup.style.left = `${x - 120}px`; // center popup horizontally
     linkPopup.style.top = `${y + 15}px`;   // place popup below clicked spot
+    console.log("showLinkPopup: pages =", pages.length, "popup position left =", linkPopup.style.left, "top =", linkPopup.style.top);
     linkPopup.classList.remove('hidden');
 }
 
