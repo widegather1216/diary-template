@@ -182,7 +182,11 @@ select { appearance: none; -webkit-appearance: none; padding-right: 2.25rem; cur
 
 /* 캔버스 사이즈 거대화 (Full-page 활용) */
 .sketch-paper {
-    width: 22.5rem; height: 31.25rem; background: #ffffff; border-radius: 0.25rem;
+    width: 22.5rem;
+    max-width: 100%;
+    aspect-ratio: 22.5 / 31.25;
+    height: auto;
+    background: #ffffff; border-radius: 0.25rem;
     box-shadow: 0 8px 30px rgba(0,0,0,0.06); position: relative; padding: 0.5rem; margin-bottom: 1.5rem;
     border: 1px solid rgba(0,0,0,0.03); overflow: hidden;
 }
@@ -205,7 +209,7 @@ select { appearance: none; -webkit-appearance: none; padding-right: 2.25rem; cur
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.42);
+    transform: translate(-50%, -50%) scale(var(--preview-scale, 0.42));
     transform-origin: center center;
     width: 794px; /* A4 기준 가로 크기 */
     height: 1123px; /* A4 기준 세로 크기 */
@@ -213,7 +217,7 @@ select { appearance: none; -webkit-appearance: none; padding-right: 2.25rem; cur
     background: transparent;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.4s ease-in-out;
+    transition: opacity 0.4s ease-in-out, transform 0.1s ease-out;
 }
 .preview-iframe.is-loaded {
     opacity: 1;

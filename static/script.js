@@ -23,6 +23,34 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFileId = null;
     let typewriterTimeout = null;
 
+    function adjustPreviewScale() {
+        const paper = document.querySelector('.sketch-paper');
+        const iframe = document.getElementById('preview-iframe');
+        if (!paper || !iframe) return;
+        
+        const rect = paper.getBoundingClientRect();
+        
+        const computedStyle = window.getComputedStyle(paper);
+        const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+        const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+        const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+        const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+        
+        const containerWidth = rect.width - (paddingLeft + paddingRight);
+        const containerHeight = rect.height - (paddingTop + paddingBottom);
+        
+        const a4Width = 794;
+        const a4Height = 1123;
+        
+        const scaleWidth = containerWidth / a4Width;
+        const scaleHeight = containerHeight / a4Height;
+        const scale = Math.min(scaleWidth, scaleHeight);
+        
+        iframe.style.setProperty('--preview-scale', scale);
+    }
+
+    window.addEventListener('resize', adjustPreviewScale);
+
     function typeWriter(element, text, speed, callback) {
         element.textContent = '';
         let i = 0;
@@ -43,15 +71,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. 다이어리 표지 펼치기 이벤트 (고무줄 모션 포함)
     if (openDiaryBtn) {
         openDiaryBtn.addEventListener('click', () => {
+            const onOpenComplete = () => {
+                appWrapper.classList.add('is-open');
+                // 다이어리가 열릴 때 스케일 조정을 즉시 및 트랜지션 완료(1.2초) 후 수행
+                adjustPreviewScale();
+                setTimeout(adjustPreviewScale, 1200);
+                setTimeout(() => { titleInput.focus(); }, 800);
+            };
+
             if (diaryBand) {
                 diaryBand.classList.add('is-unbanding');
-                setTimeout(() => {
-                    appWrapper.classList.add('is-open');
-                    setTimeout(() => { titleInput.focus(); }, 800);
-                }, 400);
+                setTimeout(onOpenComplete, 400);
             } else {
-                appWrapper.classList.add('is-open');
-                setTimeout(() => { titleInput.focus(); }, 800);
+                onOpenComplete();
             }
         });
     }
@@ -139,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (layoutsRes.ok) {
                 preGeneratedLayouts = await layoutsRes.json();
                 updatePreview('');
+                adjustPreviewScale();
             }
         } catch (e) {
             console.error('설정 및 레이아웃 데이터 로드 실패:', e);
@@ -334,6 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             previewIframe.classList.add('is-loaded');
+            adjustPreviewScale();
             
             // Wait 1.5 seconds for the preview rendering animations to complete
             typewriterTimeout = setTimeout(() => {
