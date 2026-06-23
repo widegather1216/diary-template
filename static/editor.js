@@ -560,6 +560,7 @@ function setupIframeInteractions(iframe) {
                 targetEl = targetEl.parentNode;
             }
             selectedElement = targetEl;
+            window.debug_last_click = selectedElement ? selectedElement.tagName : 'unknown';
             console.log("Iframe Click target:", selectedElement, "tag:", selectedElement ? selectedElement.tagName : 'none');
             
             // Calculate screen position relative to parent window scroll & iframe bounding rectangle
@@ -624,6 +625,7 @@ function showLinkPopup(x, y) {
     linkPopup.style.top = `${y + 15}px`;   // place popup below clicked spot
     console.log("showLinkPopup: pages =", pages.length, "popup position left =", linkPopup.style.left, "top =", linkPopup.style.top);
     linkPopup.classList.remove('hidden');
+    window.debug_popup_shown = true;
 }
 
 function hideLinkPopup() {
