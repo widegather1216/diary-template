@@ -1,7 +1,69 @@
 // static/editor.js
 
-let pages = [];
-let activePageId = null;
+let pages = [
+    {
+        id: 'page-mock-monthly',
+        title: '테스트 먼슬리',
+        orientation: 'portrait',
+        html: `
+<div class="page-container" style="padding: 40px; font-family: 'Outfit', sans-serif; box-sizing: border-box; width: 100%; height: 100%; min-height: 100%; background: #faf8f5; color: #333;">
+    <h1 style="text-align: center; color: #8b5cf6; font-size: 28px; margin-bottom: 20px;">Monthly Plan</h1>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
+        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Sun</div>
+        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Mon</div>
+        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Tue</div>
+        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Wed</div>
+        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Thu</div>
+        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Fri</div>
+        <div style="font-weight: bold; text-align: center; background: #eedfc5; padding: 8px; border-radius: 4px;">Sat</div>
+        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">1</div>
+        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">2</div>
+        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">3</div>
+        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">4</div>
+        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">5</div>
+        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">6</div>
+        <div class="monthly-day" style="border: 1px solid #e5e7eb; height: 100px; padding: 8px; border-radius: 4px; background: white;">7</div>
+    </div>
+    <div style="margin-top: 30px; text-align: center;">
+        <p style="font-size: 14px; color: #666;">일정 확인 후 상세 계획은 위클리 페이지를 참고해 주세요.</p>
+    </div>
+</div>`
+    },
+    {
+        id: 'page-mock-weekly',
+        title: '테스트 위클리',
+        orientation: 'portrait',
+        html: `
+<div class="page-container" style="padding: 40px; font-family: 'Outfit', sans-serif; box-sizing: border-box; width: 100%; height: 100%; min-height: 100%; background: #faf8f5; color: #333;">
+    <h1 style="text-align: center; color: #10b981; font-size: 28px; margin-bottom: 20px;">Weekly Notes</h1>
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        <div style="border-bottom: 2px solid #10b981; padding-bottom: 5px; font-weight: bold;">Weekly Goals</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
+                <strong>Monday</strong>
+                <p style="color: #888; font-size: 13px; margin-top: 8px;">주간 업무 및 일정을 정리합니다.</p>
+            </div>
+            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
+                <strong>Tuesday</strong>
+            </div>
+            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
+                <strong>Wednesday</strong>
+            </div>
+            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
+                <strong>Thursday</strong>
+            </div>
+            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
+                <strong>Friday</strong>
+            </div>
+            <div style="border: 1px solid #e5e7eb; background: white; padding: 15px; border-radius: 6px; min-height: 120px;">
+                <strong>Weekend</strong>
+            </div>
+        </div>
+    </div>
+</div>`
+    }
+];
+let activePageId = 'page-mock-monthly';
 let currentZoom = 0.8;
 let linkMode = false;
 let selectedElement = null;
@@ -496,24 +558,26 @@ function renderActivePage() {
     const iframe = document.createElement('iframe');
     iframe.id = 'preview-iframe';
     
-    // 브라우저 로드 시점에 맞춘 이벤트 리스너 사전 정의
+    // 1. Same-Origin Policy 보안 회피를 위한 명시적 동일 도메인 src 설정
+    iframe.src = '/static/blank.html';
+    
+    // 2. 비동기 onload 시점에 안전하게 document에 접근하여 쓰기 작업 실행
     iframe.onload = () => {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!doc) return;
+        
+        doc.open();
+        // Override min-height (e.g. min-height: 1500px) with 100% to fit the A4 container height exactly and prevent scrolling
+        let cleanHTML = page.html.replace(/min-height\s*:\s*\d+px/g, 'min-height: 100%');
+        doc.write(cleanHTML);
+        doc.close();
+        
+        // 3. 쓰기가 완전히 끝난 후 리스너 설정 및 UI 줌 적용
         setupIframeInteractions(iframe);
         updateZoomUI();
     };
     
     paperContainer.appendChild(iframe);
-    
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open();
-    // Override min-height (e.g. min-height: 1500px) with 100% to fit the A4 container height exactly and prevent scrolling
-    let cleanHTML = page.html.replace(/min-height\s*:\s*\d+px/g, 'min-height: 100%');
-    doc.write(cleanHTML);
-    doc.close();
-    
-    // 동기식으로 로드가 완료되었을 때를 위한 즉시 초기화
-    setupIframeInteractions(iframe);
-    updateZoomUI();
 }
 
 // 6. IFrame Event Handlers & Link Binding Logic
@@ -871,4 +935,11 @@ function scopeRule(rule, scope) {
         return rule.cssText;
     }
     return rule.cssText;
+}
+
+// 최초 로드 시 Mock 데이터가 탑재되어 있으면 사이드바와 첫 페이지 즉시 활성화
+if (pages.length > 0) {
+    buildSidebar();
+    renderActivePage();
+    exportBtn.disabled = false;
 }
