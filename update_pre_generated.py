@@ -18,16 +18,20 @@ except (FileNotFoundError, json.JSONDecodeError) as e:
 print("Generating new Mandalart...")
 mandalart_html = generate_default_layout_html(
     title="Mandalart Plan",
-    style_theme="Minimal"
+    style_theme="Minimal",
+    category="mandalart"
 )
+layouts["mandalart"] = mandalart_html
 layouts["Mandalart Plan"] = mandalart_html
 
 # Weekly Planner update
 print("Generating new Weekly Planner...")
 weekly_html = generate_default_layout_html(
     title="위클리 플레너",
-    style_theme="Minimal"
+    style_theme="Minimal",
+    category="weekly"
 )
+layouts["weekly"] = weekly_html
 layouts["위클리 플레너"] = weekly_html
 
 # Save back to JSON

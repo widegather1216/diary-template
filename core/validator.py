@@ -48,7 +48,7 @@ def validate_layout(html_content, title, description, category, design_mode):
             if re.search(r'width\s*:\s*100%', properties, re.IGNORECASE):
                 selectors = [s.strip() for s in selector.split(',')]
                 for sel in selectors:
-                    if sel not in ('.planner-wrapper', '.page-container'):
+                    if sel not in ('.planner-wrapper', '.page-container') and 'table' not in sel:
                         return False, f"Forbidden selector '{sel}' using width: 100%."
 
     return True, ""

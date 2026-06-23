@@ -9,7 +9,7 @@ LAYOUT_HINTS = {
     },
     "weekly": {
         "keywords": ["weekly", "주간", "위클리", "일주일", "주별"],
-        "text": "    - [Weekly Planner / 위클리 플래너 / 위클리 플레너 / 주간 스케줄러]: Create a standard Weekly Planner layout based on orientation. For Portrait: a 2-column layout where the Left column has 4 horizontal blocks for MON, TUE, WED, THU, and the Right column has 3 horizontal blocks for FRI, SAT, SUN, and a Notes block at the bottom. Each day block has a bold day header on the left and blank writing lines on the right. For Landscape: a 7-column layout (MON to SUN) with equal widths, and a full-width 'Notes' area at the bottom (height: 150px, `class=\"lined-bg\"`). Do NOT use generic placeholders like 'DAY 1', 'DAY 2', or 'Day {i+1}'."
+        "text": "    - [Weekly Planner / 위클리 플래너 / 위클리 플레너 / 주간 스케줄러]: Create a standard Weekly Planner layout based on orientation. For Portrait: a single-column vertically stacked linear layout with exactly 8 rows of equal height: 7 rows for days (MON to SUN) and 1 row at the bottom for 'Notes'. Each row has a bold day/notes header on the left (width: 60px to 80px) and a blank writing line area on the right (with `class=\"lined-bg\"`). For Landscape: a 7-column layout (MON to SUN) with equal widths, and a full-width 'Notes' area at the bottom (height: 150px, `class=\"lined-bg\"`). Do NOT use generic placeholders like 'DAY 1', 'DAY 2', or 'Day {i+1}'."
     },
     "daily": {
         "keywords": ["daily", "데일리", "일간", "하루", "오늘", "일기장", "저널", "journal", "다이어리", "다이얼리", "일기"],
