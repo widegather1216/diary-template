@@ -533,28 +533,133 @@ function exportToPDF() {
     
     printContainer.innerHTML = '';
     const size = editorPageSize.value;
+    const parser = new DOMParser();
     
     pages.forEach(page => {
         const pageDiv = document.createElement('div');
         pageDiv.className = `pdf-page ${size} ${page.orientation || 'portrait'}`;
         pageDiv.id = page.id;
         
-        // Scope the body and page-container styles to the specific page ID 
-        // to prevent styling leaks without breaking the flat DOM required for PDF link navigation.
-        // Also strip any global @page directives that can break the printing layout.
-        let cleanHTML = page.html
-            .replace(/@page\s*\{[^}]*\}/gi, '')
-            .replace(/body\s*\{/g, `#${page.id} {`)
-            .replace(/body\s*,/g, `#${page.id},`)
-            .replace(/html\s*\{/g, `#${page.id} {`)
-            .replace(/html\s*,/g, `#${page.id},`)
-            .replace(/\.page-container/g, `#${page.id} .page-container`)
-            .replace(/min-height\s*:\s*\d+px/g, 'min-height: 100%');
-            
-        pageDiv.innerHTML = cleanHTML;
+        // Replace min-height of body/canvas to prevent A4 pages from stretching
+        const cleanHTML = page.html.replace(/min-height\s*:\s*\d+px/g, 'min-height: 100%');
+        const doc = parser.parseFromString(cleanHTML, 'text/html');
+        
+        // 1. Extract dynamic Google Fonts styles and link references, appending them to the main head
+        const linkTags = doc.querySelectorAll('link[rel="stylesheet"]');
+        linkTags.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && !document.querySelector(`link[href="${href}"]`)) {
+                const newLink = document.createElement('link');
+                newLink.rel = 'stylesheet';
+                newLink.href = href;
+                document.head.appendChild(newLink);
+            }
+        });
+        
+        // 2. Extract style blocks and scope rules to this specific page element
+        const styleTags = doc.querySelectorAll('style');
+        let cssText = '';
+        styleTags.forEach(style => {
+            cssText += style.textContent + '\n';
+        });
+        
+        // Scope every CSS rule so it doesn't bleed out of this specific pageDiv ID wrapper
+        const scopeSelector = `#${page.id}`;
+        const scopedCSS = scopeCSS(cssText, scopeSelector);
+        
+        // Create style block inside the page div
+        const styleEl = document.createElement('style');
+        styleEl.textContent = scopedCSS;
+        pageDiv.appendChild(styleEl);
+        
+        // 3. Extract only the actual content container (.page-container)
+        const pageContainer = doc.querySelector('.page-container');
+        if (pageContainer) {
+            pageDiv.appendChild(pageContainer.cloneNode(true));
+        } else {
+            // Fallback if page-container structure is not found (should not happen normally)
+            pageDiv.innerHTML += doc.body.innerHTML;
+        }
+        
         printContainer.appendChild(pageDiv);
     });
     
     // Trigger native printing popup (PDF export)
     window.print();
+}
+
+/**
+ * Scopes stylesheet rules by prepending a selector prefix.
+ * Falls back to basic regex replacement if parsing fails.
+ */
+function scopeCSS(cssText, scopeSelector) {
+    // Strip global @page directives that can override named page orientation layouts
+    cssText = cssText.replace(/@page\s*\{[^}]*\}/gi, '');
+    
+    const tempStyle = document.createElement('style');
+    tempStyle.textContent = cssText;
+    document.head.appendChild(tempStyle);
+    
+    let scopedCss = '';
+    try {
+        const sheet = tempStyle.sheet;
+        const rules = sheet.cssRules || [];
+        for (let i = 0; i < rules.length; i++) {
+            scopedCss += scopeRule(rules[i], scopeSelector) + '\n';
+        }
+    } catch (e) {
+        console.error('Failed to scope CSS natively, using regex fallback:', e);
+        // Robust regex fallback
+        scopedCss = cssText
+            .replace(/body\s*\{/g, `${scopeSelector} {`)
+            .replace(/body\s*,/g, `${scopeSelector},`)
+            .replace(/html\s*\{/g, `${scopeSelector} {`)
+            .replace(/html\s*,/g, `${scopeSelector},`)
+            .replace(/\.page-container/g, `${scopeSelector} .page-container`);
+    } finally {
+        tempStyle.remove();
+    }
+    
+    // Explicitly add print-color-adjust for backgrounds inside the scoped wrapper
+    scopedCss += `
+${scopeSelector} {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+`;
+    
+    return scopedCss;
+}
+
+/**
+ * Recursively prefixes rule selectors with the scope selector.
+ */
+function scopeRule(rule, scope) {
+    if (rule.type === CSSRule.STYLE_RULE) {
+        const selectors = rule.selectorText.split(',');
+        const scopedSelectors = selectors.map(sel => {
+            const s = sel.trim();
+            if (s === 'html' || s === 'body') {
+                return scope;
+            }
+            if (s.startsWith('.page-container')) {
+                return `${scope} ${s}`;
+            }
+            // Prefix other general classes or tags
+            return `${scope} ${s}`;
+        }).join(', ');
+        
+        return `${scopedSelectors} { ${rule.style.cssText} }`;
+    } else if (rule.type === CSSRule.MEDIA_RULE) {
+        let mediaContent = '';
+        const subRules = rule.cssRules || [];
+        for (let i = 0; i < subRules.length; i++) {
+            mediaContent += scopeRule(subRules[i], scope) + '\n';
+        }
+        return `@media ${rule.media.mediaText} {\n${mediaContent}\n}`;
+    } else if (rule.type === CSSRule.KEYFRAMES_RULE || rule.type === CSSRule.KEYFRAME_RULE || rule.type === CSSRule.FONT_FACE_RULE) {
+        // Return global definitions as-is
+        return rule.cssText;
+    }
+    return rule.cssText;
 }

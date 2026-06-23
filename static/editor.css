@@ -843,6 +843,11 @@ textarea {
 }
 
 @media print {
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
     /* Prevent browser print margin override on body/html */
     html, body {
         margin: 0 !important;
