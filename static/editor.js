@@ -875,41 +875,4 @@ function scopeRule(rule, scope) {
     return rule.cssText;
 }
 
-// 최초 로드 시 고품질 정적 템플릿 JSON 파일 비동기 로딩 개시
-async function loadDefaultMockPages() {
-    try {
-        const response = await fetch('/static/pre_generated_layouts.json');
-        if (!response.ok) throw new Error('Failed to load layouts JSON');
-        
-        const layouts = await response.json();
-        
-        // 먼슬리와 위클리 고품질 AI 템플릿을 기본 탑재
-        if (layouts.monthly && layouts.weekly) {
-            pages = [
-                {
-                    id: 'page-mock-monthly',
-                    title: '테스트 먼슬리',
-                    orientation: 'portrait',
-                    html: layouts.monthly
-                },
-                {
-                    id: 'page-mock-weekly',
-                    title: '테스트 위클리',
-                    orientation: 'portrait',
-                    html: layouts.weekly
-                }
-            ];
-            activePageId = 'page-mock-monthly';
-            
-            buildSidebar();
-            renderActivePage();
-            exportBtn.disabled = false;
-        }
-    } catch (e) {
-        console.error('Error loading default mock pages:', e);
-        // JSON 로드 실패 시 빈 상태로 부팅
-        buildSidebar();
-    }
-}
 
-loadDefaultMockPages();
