@@ -518,10 +518,9 @@ function renderActivePage() {
 
 // 6. IFrame Event Handlers & Link Binding Logic
 function setupIframeInteractions(iframe) {
-    if (iframe.dataset.initialized === 'true') return;
-    iframe.dataset.initialized = 'true';
-    
     const doc = iframe.contentDocument || iframe.contentWindow.document;
+    if (!doc || doc.initialized === true) return;
+    doc.initialized = true;
     
     if (linkMode) {
         // Inject Outline styling in head for visual selection
