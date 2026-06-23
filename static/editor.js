@@ -60,6 +60,7 @@ submitAddBtn.addEventListener('click', generateNewPage);
 zoomInBtn.addEventListener('click', () => adjustZoom(0.1));
 zoomOutBtn.addEventListener('click', () => adjustZoom(-0.1));
 linkModeCheckbox.addEventListener('change', toggleLinkMode);
+editorPageSize.addEventListener('change', renderActivePage);
 
 applyLinkBtn.addEventListener('click', applyHyperlink);
 unlinkBtn.addEventListener('click', removeHyperlink);
@@ -80,7 +81,63 @@ function adjustZoom(amount) {
 
 function updateZoomUI() {
     zoomValue.textContent = `${Math.round(currentZoom * 100)}%`;
-    paperContainer.style.transform = `scale(${currentZoom})`;
+    
+    // activePage가 있는지 확인
+    const activePage = pages.find(p => p.id === activePageId);
+    if (!activePage) {
+        paperContainer.style.width = '';
+        paperContainer.style.height = '';
+        return;
+    }
+    
+    const size = editorPageSize.value;
+    const orientation = activePage.orientation || 'portrait';
+    const dims = PAGE_DIMENSIONS[size]?.[orientation] || PAGE_DIMENSIONS['A4'].portrait;
+    
+    // 종이(창 크기)는 100% 규격으로 상시 고정
+    paperContainer.style.width = `${dims.w}px`;
+    paperContainer.style.height = `${dims.h}px`;
+    paperContainer.style.transform = '';
+    
+    // iframe 내부의 콘텐츠 줌을 수행
+    const iframe = document.getElementById('preview-iframe');
+    if (iframe) {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (doc) {
+            applyContentZoom(doc, currentZoom);
+        }
+    }
+}
+
+/**
+ * iframe 내부의 body 크기 및 scale 속성을 인위적으로 조율하여 콘텐츠 줌을 형성합니다.
+ */
+function applyContentZoom(doc, zoom) {
+    let style = doc.getElementById('content-zoom-style');
+    if (!style) {
+        style = doc.createElement('style');
+        style.id = 'content-zoom-style';
+        doc.head.appendChild(style);
+    }
+    
+    // body를 특정 비율로 축소/확대하고, 스크롤 레이아웃이 찢어지지 않게 calc로 wrap
+    style.innerHTML = `
+        body {
+            transform: scale(${zoom}) !important;
+            transform-origin: top left !important;
+            width: ${Math.round(100 / zoom)}% !important;
+            height: ${Math.round(100 / zoom)}% !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+            overflow: auto !important;
+        }
+        /* html 태그 오버플로우 관리 */
+        html {
+            overflow: hidden !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+    `;
 }
 
 // 2. Modal Management
@@ -432,13 +489,8 @@ function renderActivePage() {
     
     currentPageTitle.textContent = page.title;
     
-    // Set Dimensions
-    const size = editorPageSize.value;
-    const orientation = page.orientation || 'portrait';
-    const dims = PAGE_DIMENSIONS[size]?.[orientation] || PAGE_DIMENSIONS['A4'].portrait;
-    
-    paperContainer.style.width = `${dims.w}px`;
-    paperContainer.style.height = `${dims.h}px`;
+    // Set Dimensions via zoom UI
+    updateZoomUI();
     
     paperContainer.innerHTML = '';
     const iframe = document.createElement('iframe');
@@ -454,6 +506,7 @@ function renderActivePage() {
     
     iframe.onload = () => {
         setupIframeInteractions(iframe);
+        updateZoomUI();
     };
 }
 
@@ -677,6 +730,10 @@ function exportToPDF() {
         // Replace min-height of body/canvas to prevent A4 pages from stretching
         const cleanHTML = page.html.replace(/min-height\s*:\s*\d+px/g, 'min-height: 100%');
         const doc = parser.parseFromString(cleanHTML, 'text/html');
+        
+        // Remove content-zoom-style for high-fidelity 100% scaling export
+        const zoomStyleEl = doc.getElementById('content-zoom-style');
+        if (zoomStyleEl) zoomStyleEl.remove();
         
         // 1. Extract dynamic Google Fonts styles and link references, appending them to the main head
         const linkTags = doc.querySelectorAll('link[rel="stylesheet"]');
