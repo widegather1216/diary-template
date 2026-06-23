@@ -469,10 +469,17 @@ function setupIframeInteractions(iframe) {
             * {
                 cursor: cell !important;
             }
-            *:hover {
+            /* 보라색 가이드라인: 하이퍼링크가 걸려있지 않은 일반 요소 */
+            *:not(a):not(a *):not(:has(a)):hover {
                 outline: 2px dashed #8b5cf6 !important;
                 outline-offset: -1px;
                 background-color: rgba(139, 92, 246, 0.05) !important;
+            }
+            /* 초록색 가이드라인: 이미 하이퍼링크가 적용된 요소 및 부모/자식 요소 */
+            a:hover, a *:hover, *:has(> a):hover, *:has(> a) *:hover {
+                outline: 2px dashed #10b981 !important;
+                outline-offset: -1px;
+                background-color: rgba(16, 185, 129, 0.05) !important;
             }
             a {
                 pointer-events: none !important; /* Disable navigation during edit */
@@ -535,8 +542,8 @@ function showLinkPopup(x, y) {
         }
     });
     
-    // Check if element is already an anchor link or wrapped in one
-    const existingAnchor = selectedElement.closest('a');
+    // Check if element is already an anchor link or wraps/contains one
+    const existingAnchor = selectedElement.closest('a') || selectedElement.querySelector('a');
     if (existingAnchor && existingAnchor.getAttribute('href')?.startsWith('#')) {
         const targetId = existingAnchor.getAttribute('href').substring(1);
         linkTargetSelect.value = targetId;
@@ -567,8 +574,8 @@ function applyHyperlink() {
     const iframe = document.getElementById('preview-iframe');
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     
-    // Check if element is already inside an anchor
-    let anchor = selectedElement.closest('a');
+    // Check if element is already inside an anchor or contains one
+    let anchor = selectedElement.closest('a') || selectedElement.querySelector('a');
     
     if (anchor) {
         // Just update existing anchor
@@ -630,7 +637,7 @@ function removeHyperlink() {
     const iframe = document.getElementById('preview-iframe');
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     
-    const anchor = selectedElement.closest('a');
+    const anchor = selectedElement.closest('a') || selectedElement.querySelector('a');
     if (anchor) {
         // Replace anchor with its contents
         const parent = anchor.parentNode;

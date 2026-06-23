@@ -26,7 +26,12 @@ def _detect_category(title, description, category):
             return hint_id
     return None
 
-def bg_generate_task(task_id, data):
+def _parse_and_generate_html(task_id, data):
+    """
+    Parses request inputs, auto-detects orientation/category, binds the task update callback,
+    and runs the 2-pass AI template generation.
+    Returns: (master_html, title, page_size, orientation, progress_callback)
+    """
     title = data.get('title')
     description = data.get('description', '')
     page_size = data.get('pageSize', 'A4')
@@ -45,17 +50,21 @@ def bg_generate_task(task_id, data):
     def progress_callback(status, message):
         task_manager.update_task(task_id, status, message)
 
+    master_html = generate_layout_html(
+        title=title,
+        description=description,
+        page_size=page_size,
+        design_mode=design_mode,
+        orientation=orientation,
+        style_theme=style_theme,
+        category=category,
+        progress_callback=progress_callback
+    )
+    return master_html, title, page_size, orientation, progress_callback
+
+def bg_generate_task(task_id, data):
     try:
-        master_html = generate_layout_html(
-            title=title,
-            description=description,
-            page_size=page_size,
-            design_mode=design_mode,
-            orientation=orientation,
-            style_theme=style_theme,
-            category=category,
-            progress_callback=progress_callback
-        )
+        master_html, title, page_size, _, progress_callback = _parse_and_generate_html(task_id, data)
         
         progress_callback('rendering', '도면을 PDF 문서로 굽는 중입니다...')
         file_id, pdf_path = generate_pdf(master_html)
@@ -68,38 +77,9 @@ def bg_generate_task(task_id, data):
     except Exception as e:
         task_manager.update_task(task_id, 'failed', message=f'생성 실패: {str(e)}')
 
-
-
 def bg_generate_html_task(task_id, data):
-    title = data.get('title')
-    description = data.get('description', '')
-    page_size = data.get('pageSize', 'A4')
-    design_mode = data.get('designMode', 'print')
-    orientation = data.get('orientation')
-    style_theme = data.get('styleTheme', 'Minimal')
-    category = _detect_category(title, description, data.get('category'))
-    
-    if not orientation:
-        combined_text = f"{title} {description}".lower()
-        if any(keyword in combined_text for keyword in LANDSCAPE_KEYWORDS):
-            orientation = "landscape"
-        else:
-            orientation = "portrait"
-
-    def progress_callback(status, message):
-        task_manager.update_task(task_id, status, message)
-
     try:
-        master_html = generate_layout_html(
-            title=title,
-            description=description,
-            page_size=page_size,
-            design_mode=design_mode,
-            orientation=orientation,
-            style_theme=style_theme,
-            category=category,
-            progress_callback=progress_callback
-        )
+        master_html, title, page_size, orientation, _ = _parse_and_generate_html(task_id, data)
         
         task_manager.update_task(task_id, 'success', extra_fields={
             'html': master_html,

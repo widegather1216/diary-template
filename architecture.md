@@ -76,9 +76,12 @@ diary-template/
 │       └── review_templates.py  # Self-Reflection 검증 디자인 룰
 ├── static/                     # 프론트엔드 정적 파일
 │   ├── script.js               # SPA 프론트엔드 비동기 API 제어 로직
-│   └── style.css               # 프론트엔드 UI/UX CSS 명세
+│   ├── style.css               # 프론트엔드 UI/UX CSS 명세
+│   ├── editor.js               # [NEW] 멀티페이지 다이어리 편집기 인터랙션 로직
+│   └── editor.css              # [NEW] 멀티페이지 다이어리 편집기 전용 레이아웃/인쇄 CSS 명세
 ├── templates/
-│   └── index.html              # 메인 입력 및 설정 UI 대시보드
+│   ├── index.html              # 메인 입력 및 설정 UI 대시보드
+│   └── editor.html             # [NEW] 멀티페이지 다이어리 빌더 UI 템플릿
 └── tests/                      # 테스트 스위트
     ├── test_all.py             # 종합 통합 테스트
     ├── test_macro.py           # 매크로 치환 수식 유닛 테스트
@@ -90,7 +93,7 @@ diary-template/
 
 | 파일 경로 | 주요 역할 및 개발 책임 범위 |
 | :--- | :--- |
-| **`app.py`** | 클라이언트의 웹 요청을 접수하고 비동기 PDF 생성, SSE(Server-Sent Events)를 통한 실시간 상태 진행 스트리밍, 임시 파일 생성 및 다운로드 게이트웨이 역할을 수행하며 라이프사이클을 전담 제어. 다운로드 시 UUID 형식 정합성(32자 및 16진수 포맷)을 엄격히 검증해 임의 코드 실행이나 메모리 DOS 유발 방지. |
+| **`app.py`** | 클라이언트의 웹 요청을 접수하고 비동기 PDF 생성, SSE(Server-Sent Events)를 통한 실시간 상태 진행 스트리밍, 임시 파일 생성 및 다운로드 게이트웨이 역할을 수행하며 라이프사이클을 전담 제어. 비동기 백그라운드 태스크들(`bg_generate_task`, `bg_generate_html_task`)의 공통된 파싱 및 AI 호출 로직을 `_parse_and_generate_html()` 공통 헬퍼로 통합·모듈화하여 코드 중복 제거. 다운로드 시 UUID 형식 정합성(32자 및 16진수 포맷)을 엄격히 검증해 DoS 방지. |
 | **`core/config.py`** | 프로젝트 전역에 흩어져 있던 magic number, 디렉토리 경로, 모델 명, 레이아웃 힌트 Baseline 키, 해상도 상수 등을 일괄 집중화하여 단일 진실 공급원(Single Source of Truth) 역할 수행. |
 | **`core/generator.py`** | 1차 초안 생성(`_request_initial_layout`)과 2차 자가검증(`_request_self_reflection`)을 병렬 체이닝하여 AI 생성물의 규칙 준수를 강제하는 오케스트레이터. 재시도 가드 처리를 내재화하여 일시적 API 503 오류 발생 시 복구 수행. |
 | **`core/prompts/`** | 템플릿과 스타일 가이드라인을 격리하여, LLM 호출 시 필요한 최적의 컨텍스트(Few-shot baseline + 동적 layout_hints)를 선별 및 조립해 주는 프롬프트 데이터베이스. |
@@ -99,6 +102,9 @@ diary-template/
 | **`core/themes.py`** | 사용자가 선택한 스타일에 부합하는 Web Font(Google Fonts)를 정의하고 테마별 스타일 데코레이터 CSS를 주입하는 비주얼 에스테틱 관리자. fonts `<style>` 래핑을 분리 구조화. |
 | **`core/task_manager.py`** | 디스크 I/O 없이 메모리 상에서 비동기 태스크들의 진행 상황을 저장하고 스레드 안전성(`threading.Lock`)을 보장하는 인메모리 데이터 스토어. |
 | **`core/pdf_manager.py`** | 조립 완료된 Master HTML을 WeasyPrint 엔진으로 렌더링하고, 디스크 용량 누수를 방지하기 위해 생성 1시간이 지난 임시 PDF 파일을 청소하는 GC 시스템. 폰트/CSS 등의 웹 자원을 다운로드하고 디스크에 임시 캐싱하는 3계층 프록시 캐시 파이프라인 내장. |
+| **`templates/editor.html`** | 멀티페이지 다이어리 편집기의 레이아웃을 정의하는 메인 마크업 템플릿. 좌측 페이지 리스트(드래그 오버 & 인라인 이름 수정), 중앙 캔버스(Iframe 미리보기 & 하이퍼링크 연결 모드), 우측 글로벌 다이어리 설정창 제공. |
+| **`static/editor.js`** | 멀티페이지 빌더의 프론트엔드 비동기 통신 및 드래그 앤 드롭 정렬 알고리즘, 인라인 이름 수정 이벤트(Enter/Escape/Blur), 그리고 인쇄 시 스타일 간섭 방지를 위한 브라우저 CSSOM 파서 기반 스코핑(Scoping) 렌더링을 관장. |
+| **`static/editor.css`** | 멀티페이지 편집기 전용 레이아웃, 인라인 수정 필드, 드래그 드롭 타겟 가이드라인(퍼플 글로우 상/하 삽입 라인) 및 브라우저 강제 배경 인쇄 속성(`print-color-adjust`) 정의. |
 
 ---
 
@@ -107,7 +113,18 @@ diary-template/
 ### 2.1. 프론트엔드 및 진입점 (`static/`, `templates/`, `app.py`)
 
 - **`templates/index.html` & `static/script.js`**:
-  - 단일 페이지 애플리케이션(SPA) 형태로 사용자가 플래너의 종류, 용지 크기(A4, A5), 디자인 모드(Print/Guide), 스타일 테마(Minimal, Cute, Editorial)를 선택합니다.
+  - 단일 페이지 애플리케이션(SPA) 형태로 사용자가 단일 플래너를 생성하고 미리보는 대시보드입니다. 중복 하드코딩된 동의어 객체(`categoryMappings`)를 완전히 제거하고 초기 구동 시 `/api/config`를 호출해 서버의 단일 진실 공급원(`LAYOUT_HINTS`) 설정을 가져오도록 단순화했습니다.
+- **`templates/editor.html` & `static/editor.js` & `static/editor.css` (멀티페이지 다이어리 빌더)**:
+  - 다중 페이지 다이어리를 생성, 복제, 삭제하고 드래그 정렬 및 페이지 이동 하이퍼링크를 연결할 수 있는 빌더 엔진입니다.
+  - **글로벌 테마 설정 통합**: 페이지 생성 모달 내의 불필요한 중복 스타일 선택기를 삭제하고, 우측 글로벌 패널의 디자인 스타일 설정값(`editorStyleTheme.value`)으로 생성을 통일화해 디자인 일관성을 높였습니다.
+  - **드래그 앤 드롭 정렬**: HTML5 Drag and Drop API를 연동하고, 드래그 오버 시 상단/하단 50% 지점을 수학적으로 감지하여 보라색 발광 가이드라인(`.drag-over-above`, `.drag-over-below`)을 표시해 주는 렉트 감지 UX를 탑재했습니다. 정렬 시 내부 `pages` 배열을 정밀하게 재배치합니다.
+  - **인라인 이름 수정**: 페이지명을 더블클릭하거나 연필 모양 버튼 클릭 시, 텍스트 스팬이 입력 필드(`<input class="page-item-title-input">`)로 대체되며 텍스트 전체 자동 선택 및 포커싱이 제공됩니다. 엔터(`Enter`)나 영역 이탈(`blur`) 시 자동 저장, `Escape` 시 복구되는 반응형 UX를 구현했습니다.
+  - **인쇄 시 스타일 간섭 방지 (CSS Scoping Engine)**:
+    - 브라우저 인쇄 모드(`window.print()`) 시 모든 페이지가 하나의 DOM에 쏟아져 나오므로 스타일 시트 충돌이 발생합니다.
+    - 이를 막기 위해 `DOMParser`로 개별 페이지 HTML을 분석하고, 브라우저 native CSSOM 파서를 사용해 모든 CSS 룰 셀렉터 앞에 해당 페이지 ID(예: `#page-123`)를 강제 접두사로 접합하는 `scopeCSS`와 `scopeRule` 로직을 내장하여 스타일 오염을 완벽 차단했습니다.
+    - Google Fonts `<link>` 태그들을 검출해 메인 문서 헤더로 이식함으로써 폰트 미출력 버그를 수정했습니다.
+  - **배경 인쇄 보장**:
+    - 인쇄 스타일시트 내에 `-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;`를 전역 부여하여 줄노트, 모눈 격자, 테마 배경색이 출력되지 않는 브라우저 기본 동작을 우회하였습니다.
 - **`app.py`**:
   - Flask 앱의 진입점으로 핵심 REST API를 정의합니다.
   - `/api/generate-pdf`: 폼 데이터를 JSON으로 받아 백그라운드 태스크로 `generate_process`를 실행하고 템플릿을 생성합니다.

@@ -73,6 +73,7 @@ body {
     background: var(--accent-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    text-decoration: none;
 }
 
 .logo svg {
@@ -285,6 +286,7 @@ body {
     border: 1px solid rgba(139, 92, 246, 0.2);
     padding: 6px 14px;
     border-radius: 9999px;
+    position: relative; /* Add relative positioning to anchor the absolute tooltip */
 }
 
 .mode-label {
@@ -381,22 +383,37 @@ input:checked + .slider:before {
     position: relative;
 }
 
-.link-helper-banner {
+.link-helper-tooltip {
     position: absolute;
-    top: 20px;
-    background: rgba(139, 92, 246, 0.9);
+    top: calc(100% + 12px);
+    right: 0;
+    width: 290px;
+    background-color: #8b5cf6;
     color: white;
-    padding: 10px 20px;
+    padding: 12px 16px;
     border-radius: 8px;
-    font-size: 0.85rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    z-index: 10;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    z-index: 100;
     pointer-events: none;
-    animation: fadeInSlide 0.3s ease-out;
+    animation: fadeInSlideUp 0.25s ease-out;
 }
 
-@keyframes fadeInSlide {
-    from { transform: translateY(-10px); opacity: 0; }
+/* Tooltip arrow pointing up */
+.link-helper-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 20px;
+    width: 12px;
+    height: 12px;
+    background-color: #8b5cf6;
+    transform: rotate(45deg);
+}
+
+@keyframes fadeInSlideUp {
+    from { transform: translateY(10px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
 
@@ -979,4 +996,9 @@ textarea {
     width: 100%;
     outline: none;
     box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+/* Global utility classes */
+.hidden {
+    display: none !important;
 }

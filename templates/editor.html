@@ -14,10 +14,10 @@
         <!-- 1. Left Sidebar: Page List & Hierarchy -->
         <aside class="sidebar pages-sidebar">
             <div class="sidebar-header">
-                <div class="logo">
+                <a href="/" class="logo" title="메인 화면으로 이동">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                     <span>FormWeaver</span>
-                </div>
+                </a>
                 <span class="badge beta-badge">Builder</span>
             </div>
             
@@ -35,13 +35,6 @@
                     좌측 상단의 '+ 추가' 버튼을 눌러 첫 페이지를 생성해보세요.
                 </div>
             </div>
-            
-            <div class="sidebar-footer">
-                <a href="/" class="back-link">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                    단일 페이지 생성기로 가기
-                </a>
-            </div>
         </aside>
 
         <!-- 2. Central Workspace Canvas -->
@@ -56,6 +49,9 @@
                         <input type="checkbox" id="link-mode-checkbox">
                         <span class="slider round"></span>
                     </label>
+                    <div id="link-helper-banner" class="link-helper-tooltip hidden">
+                        💡 <strong>링크 연결 모드 활성:</strong> 페이지 내 링크를 삽입하고 싶은 임의의 영역(예: 달력 날짜, 메모 상자 등)을 클릭한 후 대상 페이지를 지정하세요.
+                    </div>
                 </div>
 
                 <div class="canvas-controls">
@@ -71,10 +67,7 @@
 
             <!-- Page Container (mimicking real notebook page) -->
             <div class="page-viewport">
-                <!-- Helper message banner when in link mode -->
-                <div id="link-helper-banner" class="link-helper-banner hidden">
-                    💡 <strong>링크 연결 모드 활성:</strong> 페이지 내 하이퍼링크를 넣고 싶은 영역(예: 날짜 칸, 메모 상자)을 클릭하세요.
-                </div>
+
                 
                 <div class="paper-container" id="paper-container">
                     <div class="paper-placeholder">

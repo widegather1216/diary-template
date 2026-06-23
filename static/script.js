@@ -124,35 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Interactive Blueprint & Real Preview 로직
     let preGeneratedLayouts = {};
     let themeConfig = {};
-    let categoryMappings = {
-        "mandalart": ["mandalart", "만다라트", "만다라", "3x3", "81", "만달아트", "목표달성"],
-        "monthly": ["monthly", "calendar", "월간", "캘린더", "달력", "한달", "계획표", "먼슬리", "플래너", "플레너", "스케줄러", "스케쥴러", "월별"],
-        "weekly": ["weekly", "주간", "위클리", "일주일", "주별", "플래너", "플레너", "스케줄러", "스케쥴러"],
-        "daily": ["daily", "데일리", "일간", "하루", "오늘", "일기장", "저널", "journal", "다이어리", "다이얼리", "스케줄러", "스케쥴러", "플래너", "플레너", "일기"],
-        "yearly": ["yearly", "연간", "연간 계획", "1년", "이어리", "year", "신년 계획", "새해 계획", "플래너", "플레너", "스케줄러", "스케쥴러"],
-        "todo": ["to-do", "todo", "투두", "할 일", "할일", "태스크", "checklist", "체크리스트", "해야할일", "해야할 일", "업무 목록"],
-        "habit": ["habit", "해빗", "습관", "루틴", "트래커", "tracker", "습관 트래커", "습관 형성", "습관 기록", "루틴 체크", "매일 습관"],
-        "ledger": ["ledger", "가계부", "금전", "지출", "용돈", "소비", "expense", "budget", "용돈 기입장", "용돈기입장", "자산 관리", "재정 기록", "돈 관리"],
-        "cornell": ["cornell", "코넬", "노트", "필기", "notes", "코넬식", "필기 노트", "강의 노트", "수업 필기"],
-        "diet": ["diet", "meal", "식단", "식단표", "다이어트", "식사", "food", "메뉴 플래너", "메뉴 플레너", "식단 일기"],
-        "reading_note": ["reading note", "book review", "독서록", "독서 노트", "책 리뷰", "서평", "북리뷰", "책 기록", "독서 일기", "독후감", "독서 감상문", "독서", "책"],
-        "reading_tracker": ["reading tracker", "book log", "독서 기록", "독서 리스트", "책 목록", "독서 트래커", "책장", "도서 목록", "책 리스트", "book list"],
-        "travel": ["travel", "itinerary", "여행", "일정표", "휴가", "trip", "여행 계획", "여행 일정", "이티너러리", "패킹 리스트", "준비물 리스트"],
-        "fitness": ["fitness", "workout", "헬스", "운동", "피트니스", "트레이닝", "gym", "운동 일지", "헬스 일지", "운동 기록", "운동 트래커", "오운완"],
-        "project": ["project", "goal", "목표", "프로젝트", "로드맵", "roadmap", "달성", "목표 달성표", "프로젝트 관리", "마일스톤"],
-        "gratitude": ["gratitude", "감사", "긍정", "일기", "affirmation", "감사 일기", "감사 저널", "긍정 확언", "행복 일기", "마음 챙김 일기"],
-        "mood": ["mood", "감정", "기분", "무드", "emotion", "무드 트래커", "기분 트래커", "감정 트래커", "감정 기록", "기분 기록"],
-        "study": ["study", "스터디", "공부", "시험", "학습", "수험생", "공부 계획", "공부 플래너", "공부 플레너", "스터디 플래너", "스터디 플레너", "시험 대비"],
-        "time_blocking": ["time block", "시간 블록", "타임 블록", "시간 관리", "시간 계획", "타임 블로킹", "시간 블로킹", "24시간 타임라인", "시간표"],
-        "routine": ["routine", "루틴", "습관 형성", "루틴 관리", "루틴 플래너", "루틴 플레너", "모닝 루틴", "나이트 루틴", "아침 루틴", "저녁 루틴"],
-        "mindmap": ["mind map", "마인드맵", "브레인스토밍", "생각 정리", "idea", "아이디어", "생각 그물", "아이디어 맵", "생각 매핑"],
-        "retrospective": ["review", "retrospective", "회고", "성찰", "kpt", "피드백", "주간 회고", "월간 회고", "셀프 피드백", "회고록"],
-        "budget": ["budget", "wishlist", "예산", "위시리스트", "저축", "savings", "위시 리스트", "구매 계획", "저축 트래커", "용돈 계획", "예산안"],
-        "recipe": ["recipe", "레시피", "요리법", "조리법", "cooking", "chef", "요리 기록", "레시피 기록", "쿡북", "recipe book"],
-        "pet": ["pet", "animal", "반려동물", "강아지", "고양이", "집사", "동물 케어", "반려견 일지", "반려묘 일지", "펫 다이어리", "펫 다이얼리", "댕댕이", "냥냥이"],
-        "sleep": ["sleep", "energy", "수면", "에너지", "컨디션", "잠", "dream", "꿈", "수면 패턴", "수면 일기", "잠 기록", "꿈 일기"],
-        "blank_note": ["blank", "grid note", "dot note", "lined note", "메모", "모눈", "도트", "노트 패드", "free note", "무지 노트", "유선 노트", "그리드 노트", "줄 노트", "메모지", "자유 노트"]
-    };
+    let categoryMappings = {};
     const styleThemeSelect = document.getElementById('styleTheme');
     const designModeRadios = document.querySelectorAll('input[name="designMode"]');
 
