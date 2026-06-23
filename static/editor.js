@@ -38,7 +38,6 @@ const submitAddBtn = document.getElementById('submit-add-btn');
 
 const newPageTitleInput = document.getElementById('new-page-title');
 const newPagePromptInput = document.getElementById('new-page-prompt');
-const newPageStyleSelect = document.getElementById('new-page-style');
 const newPageOrientationSelect = document.getElementById('new-page-orientation');
 
 const modalStatusBox = document.getElementById('modal-status-box');
@@ -90,8 +89,6 @@ function showModal(show) {
         addModal.classList.remove('hidden');
         newPageTitleInput.value = '';
         newPagePromptInput.value = '';
-        // Set style template dynamically to match general editor setting
-        newPageStyleSelect.value = editorStyleTheme.value;
         newPageTitleInput.focus();
     } else {
         addModal.classList.add('hidden');
@@ -122,7 +119,7 @@ function generateNewPage() {
         title: title,
         description: prompt,
         pageSize: editorPageSize.value,
-        styleTheme: newPageStyleSelect.value,
+        styleTheme: editorStyleTheme.value,
         orientation: newPageOrientationSelect.value
     };
     
@@ -228,6 +225,9 @@ function buildSidebar() {
                 <span class="page-item-title">${page.title}</span>
             </div>
             <div class="page-item-actions">
+                <button type="button" class="item-action-btn rename" title="이름 수정">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path></svg>
+                </button>
                 <button type="button" class="item-action-btn duplicate" title="페이지 복제">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 </button>
@@ -239,11 +239,21 @@ function buildSidebar() {
         
         // Clicking item selects the page (only if not clicking actions)
         item.addEventListener('click', (e) => {
-            if (e.target.closest('.item-action-btn')) return;
+            if (e.target.closest('.item-action-btn') || e.target.closest('.page-item-title-input')) return;
             selectPage(page.id);
         });
         
         // Bind actions
+        item.querySelector('.rename').addEventListener('click', (e) => {
+            e.stopPropagation();
+            startRename(page, item);
+        });
+        
+        item.querySelector('.page-item-title').addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            startRename(page, item);
+        });
+        
         item.querySelector('.duplicate').addEventListener('click', (e) => {
             e.stopPropagation();
             duplicatePage(page.id);
@@ -254,7 +264,124 @@ function buildSidebar() {
             deletePage(page.id);
         });
         
+        // Drag & Drop event bindings
+        item.setAttribute('draggable', 'true');
+        
+        item.addEventListener('dragstart', (e) => {
+            // Only allow drag if not currently editing rename
+            if (item.querySelector('.page-item-title-input')) {
+                e.preventDefault();
+                return;
+            }
+            e.dataTransfer.setData('text/plain', page.id);
+            item.classList.add('dragging');
+        });
+        
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+            document.querySelectorAll('.page-item').forEach(el => {
+                el.classList.remove('drag-over-above', 'drag-over-below');
+            });
+        });
+        
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const draggingEl = document.querySelector('.page-item.dragging');
+            if (!draggingEl || draggingEl.dataset.pageId === page.id) return;
+            
+            const rect = item.getBoundingClientRect();
+            const relativeY = e.clientY - rect.top;
+            
+            if (relativeY < rect.height / 2) {
+                item.classList.add('drag-over-above');
+                item.classList.remove('drag-over-below');
+            } else {
+                item.classList.add('drag-over-below');
+                item.classList.remove('drag-over-above');
+            }
+        });
+        
+        item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over-above', 'drag-over-below');
+        });
+        
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const draggedId = e.dataTransfer.getData('text/plain');
+            if (draggedId === page.id) return;
+            
+            const draggedPage = pages.find(p => p.id === draggedId);
+            if (!draggedPage) return;
+            
+            const cleanPages = pages.filter(p => p.id !== draggedId);
+            const targetIdx = cleanPages.findIndex(p => p.id === page.id);
+            
+            const rect = item.getBoundingClientRect();
+            const relativeY = e.clientY - rect.top;
+            const isAbove = relativeY < rect.height / 2;
+            
+            const insertIdx = isAbove ? targetIdx : targetIdx + 1;
+            cleanPages.splice(insertIdx, 0, draggedPage);
+            
+            pages = cleanPages;
+            buildSidebar();
+        });
+        
         pagesList.appendChild(item);
+    });
+}
+
+/**
+ * Turns the page title span into an inline input field to rename the page
+ */
+function startRename(page, item) {
+    const titleSpan = item.querySelector('.page-item-title');
+    if (!titleSpan || item.querySelector('.page-item-title-input')) return;
+    
+    // Disable dragging during rename
+    item.removeAttribute('draggable');
+    
+    const originalTitle = page.title;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'page-item-title-input';
+    input.value = originalTitle;
+    
+    titleSpan.replaceWith(input);
+    input.focus();
+    input.select();
+    
+    let isFinished = false;
+    
+    function saveRename() {
+        if (isFinished) return;
+        isFinished = true;
+        
+        const newTitle = input.value.trim();
+        if (newTitle && newTitle !== originalTitle) {
+            page.title = newTitle;
+            // Update active page title if it is the currently selected page
+            if (page.id === activePageId) {
+                currentPageTitle.textContent = newTitle;
+            }
+        }
+        buildSidebar();
+    }
+    
+    function cancelRename() {
+        if (isFinished) return;
+        isFinished = true;
+        buildSidebar();
+    }
+    
+    input.addEventListener('blur', saveRename);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveRename();
+        } else if (e.key === 'Escape') {
+            cancelRename();
+        }
     });
 }
 
