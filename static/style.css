@@ -566,3 +566,41 @@ body.is-generating-mode .sketch-paper { animation: pulsePaper 3s ease-in-out inf
 @keyframes drawHead {
     to { stroke-dashoffset: 0; }
 }
+
+/* Multi-page Editor Transition & Link styling */
+.editor-btn-link {
+    display: block;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1.5px dashed #1E293B;
+    color: #1E293B;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    background: rgba(30, 41, 59, 0.03);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.editor-btn-link:hover {
+    background: rgba(30, 41, 59, 0.08);
+    border-style: solid;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30, 41, 59, 0.08);
+}
+
+.diary-wrapper.transitioning-out {
+    transform: scale(4.5) translate(-4%, -2%) !important;
+    transform-origin: center center !important;
+    opacity: 0 !important;
+    filter: blur(12px) !important;
+    transition: transform 0.85s cubic-bezier(0.7, 0, 0.2, 1) !important, 
+                opacity 0.85s cubic-bezier(0.7, 0, 0.2, 1) !important, 
+                filter 0.85s ease !important;
+    pointer-events: none !important;
+}
+
+.diary-wrapper.transitioning-out .diary-pages {
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}

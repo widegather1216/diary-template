@@ -88,6 +88,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 1.2. 에디터 페이지로 넘어가는 전환 애니메이션 로직
+    const editorBtnLink = document.querySelector('.editor-btn-link');
+    if (editorBtnLink) {
+        editorBtnLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetUrl = editorBtnLink.getAttribute('href');
+            
+            // 다이어리 wrapper에 트랜지션 클래스 추가
+            appWrapper.classList.add('transitioning-out');
+            
+            // 트랜지션 완료 후 실제 이동 (850ms)
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 850);
+        });
+    }
+
     // 1.5. 다이어리 3D 북 플립 (Book Flip) 로직
     // 전역 함수로 노출하여 HTML의 onclick 속성에서 바로 호출할 수 있게 함
     window.flipNext = function(sheetIndex) {
