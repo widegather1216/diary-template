@@ -519,7 +519,7 @@ function renderActivePage() {
 // 6. IFrame Event Handlers & Link Binding Logic
 function setupIframeInteractions(iframe) {
     const doc = iframe.contentDocument || iframe.contentWindow.document;
-    console.log("setupIframeInteractions: linkMode =", linkMode, "doc.initialized =", doc ? doc.initialized : 'no-doc');
+    console.error("setupIframeInteractions: linkMode =", linkMode, "doc.initialized =", doc ? doc.initialized : 'no-doc');
     if (!doc || doc.initialized === true) return;
     doc.initialized = true;
     
@@ -561,7 +561,7 @@ function setupIframeInteractions(iframe) {
             }
             selectedElement = targetEl;
             window.debug_last_click = selectedElement ? selectedElement.tagName : 'unknown';
-            console.log("Iframe Click target:", selectedElement, "tag:", selectedElement ? selectedElement.tagName : 'none');
+            console.error("Iframe Click target:", selectedElement, "tag:", selectedElement ? selectedElement.tagName : 'none');
             
             // Calculate screen position relative to parent window scroll & iframe bounding rectangle
             const iframeRect = iframe.getBoundingClientRect();
@@ -623,7 +623,7 @@ function showLinkPopup(x, y) {
     
     linkPopup.style.left = `${x - 120}px`; // center popup horizontally
     linkPopup.style.top = `${y + 15}px`;   // place popup below clicked spot
-    console.log("showLinkPopup: pages =", pages.length, "popup position left =", linkPopup.style.left, "top =", linkPopup.style.top);
+    console.error("showLinkPopup: pages =", pages.length, "popup position left =", linkPopup.style.left, "top =", linkPopup.style.top);
     linkPopup.classList.remove('hidden');
     window.debug_popup_shown = true;
 }
