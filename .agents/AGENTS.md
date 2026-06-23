@@ -50,13 +50,20 @@ FormWeaver는 사용자의 자연어 요구사항을 바탕으로 AI(Gemini)가 
 최근 대화창을 통해 다음과 같은 중요 UX/성능 개선 작업이 완료되었습니다:
 - **Mandalart 프롬프트 고도화**: LLM 생성 도중 레이아웃 깨짐 현상을 제어하기 위해 힌트와 Few-shot 예시 사전을 구조적으로 개선하여 에러 리젠율을 최적화했습니다.
 - **PDF 속도 및 SSE 실시간 스트리밍**: 비동기 백그라운드 스레드와 SSE API를 결합하여 다량의 템플릿 생성 과정을 웹소켓 없이도 직관적으로 브라우저에 피드백합니다.
-- **에디터 진입 트랜지션 애니메이션 (★)**:
+- **에디터 진입 트랜지션 애니메이션**:
   - 메인 페이지에서 "나만의 다중 페이지 다이어리 만들기" 이동 링크 클릭 시, 다이어리 판형이 `scale(4.5)` 확대 및 블러 처리되며 빨려 들어가는 듯이 사라지는 모션 구현 ([script.js](file:///Users/kimbeomjun/diary-template/static/script.js) 내 클릭 인터셉터 및 [style.css](file:///Users/kimbeomjun/diary-template/static/style.css) 참조).
   - 에디터 로드 시 좌우 사이드 패널이 양쪽에서 슬라이딩 인 되고, 중앙의 `.paper-container`가 큰 스케일에서 정스케일로 연착륙하며 흐려짐이 걷히는 모션으로 자연스러운 이어짐 연출 ([editor.css](file:///Users/kimbeomjun/diary-template/static/editor.css) 참조).
+- **HTTPS 환경 하의 IFrame Same-Origin Policy 보안 회피 및 비동기 렌더링 (★)**:
+  - 실서버(HTTPS) 환경에서 `about:blank` iframe에 직접 `doc.write`하여 렌더링을 제어할 시 발생하는 보안 예외(SOP)와 비동기 렌더링 경쟁 상태(Race Condition)를 해결했습니다.
+  - 동일 Origin의 정적 파일인 `/static/blank.html`을 `iframe.src`로 설정한 뒤, `onload` 콜백 내부에서 `doc.write`와 `setupIframeInteractions`를 일괄 실행하도록 결합하여 타이밍 오류를 원천 차단했습니다.
 
 ---
 
 ## 5. 다음 에이전트를 위한 작업 팁
-- 로컬 웹서버 실행: 터미널에서 `python3 app.py`를 제안하여 실행하십시오. (개발 도중 빌드 검증을 엄격히 권장)
-- 테스트 코드 동작 확인: 의존성 환경이 독립되어 있을 수 있으므로 가상환경 경로를 통해 모듈 단위 테스트(`.venv/bin/python -m pytest tests/...`)를 검증하십시오.
+- **로컬 웹서버 실행**: 터미널에서 `python3 app.py`를 제안하여 실행하십시오. (개발 도중 빌드 검증을 엄격히 권장)
+- **정적 파일 캐시 무효화 (Cache-Busting)**:
+  - 서버 배포 시 브라우저 또는 CDN 캐시로 인해 수정사항이 무시되는 경우가 잦습니다. `editor.js`나 `editor.css`를 수정하는 경우 반드시 `templates/editor.html` 내부의 리소스 주소 뒤 쿼리 스트링(`editor.js?v=XX`) 버전을 명시적으로 올려주어야 실서버에 즉각 갱신됩니다.
+- **테스트 편의성을 위한 Mock 템플릿 fetch**:
+  - 수동으로 링크 모션 등의 편집 동작을 테스트할 때 매번 AI 생성을 기다리는 낭비를 줄이기 위해, 필요 시 `static/pre_generated_layouts.json` 정적 리소스 데이터를 비동기 `fetch`하여 메모리 `pages` 상태에 세팅해놓고 개발하는 기법이 유용합니다.
+- **테스트 코드 동작 확인**: 의존성 환경이 독립되어 있을 수 있으므로 가상환경 경로를 통해 모듈 단위 테스트(`.venv/bin/python -m pytest tests/...`)를 검증하십시오.
 - 추가 아키텍처에 대한 상세 정보는 [architecture.md](file:///Users/kimbeomjun/diary-template/architecture.md)에 다이어그램과 함께 상세히 정리되어 있으므로 함께 참고하시기 바랍니다.
